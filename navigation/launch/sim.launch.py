@@ -6,6 +6,8 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 def generate_launch_description():
+    model_name = os.getenv('TURTLEBOT3_MODEL', 'burger')
+    pkg_path = get_package_share_directory('turtlebot3_description')
     tb3_gazebo_dir = get_package_share_directory('turtlebot3_gazebo')
     world_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -13,14 +15,40 @@ def generate_launch_description():
         )
     )
 
-    my_nav_node = Node(
+    urdf_file = os.path.join(pkg_path, 'urdf', f'turtlebot3_{model_name}.urdf')
+    robot_desc = None
+    with open(urdf_file, 'r') as infp:
+        robot_desc = infp.read()
+
+    robot = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        output='screen',
+        parameters=[{
+            'use_sim_time': True, 
+            'robot_description': robot_desc
+        }]
+    )
+
+    nav_node = Node(
         package='navigation',
         executable='navigator', 
         name='my_navigator',
         output='screen'
     )
 
+    rviz = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        parameters=[{'use_sim_time': True}],
+        output='screen'
+    )
+
     return LaunchDescription([
         world_launch,
-        my_nav_node
+        robot,
+        nav_node,
+        rviz
     ])
