@@ -26,8 +26,10 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'navigator = navigation.navigation:main'
+            'nav_node = navigation.navigator:main',
+            'spline_node = navigation.spline:main',
         ],
     },
 
 )
+
