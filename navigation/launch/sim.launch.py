@@ -31,6 +31,13 @@ def generate_launch_description():
         }]
     )
 
+    static_tf_node = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='odom_to_base_link_bridge',
+        arguments=['0', '0', '0', '0', '0', '0', 'odom', 'base_footprint'] 
+)
+
     rviz = Node(
         package='rviz2',
         executable='rviz2',
@@ -42,6 +49,7 @@ def generate_launch_description():
     return LaunchDescription([
         world_launch,
         robot,
+        static_tf_node,
         rviz
     ])
 
