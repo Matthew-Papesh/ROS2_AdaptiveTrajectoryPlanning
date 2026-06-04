@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "navigation_interfaces__rs",
+		"source" : "build/navigation_interfaces/navigation_interfaces__rs"
+	}
+}
