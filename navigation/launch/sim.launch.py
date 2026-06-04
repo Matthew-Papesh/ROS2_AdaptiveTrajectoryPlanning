@@ -31,13 +31,6 @@ def generate_launch_description():
         }]
     )
 
-    nav_node = Node(
-        package='navigation',
-        executable='navigator', 
-        name='my_navigator',
-        output='screen'
-    )
-
     rviz = Node(
         package='rviz2',
         executable='rviz2',
@@ -49,6 +42,6 @@ def generate_launch_description():
     return LaunchDescription([
         world_launch,
         robot,
-        nav_node,
         rviz
     ])
+
