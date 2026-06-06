@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+from glob import glob
 import os
 
 package_name = 'navigation'
@@ -11,6 +12,8 @@ setup(
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), ['launch/sim.launch.py']),
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
+        (os.path.join('share', package_name, 'maps'), glob('maps/*'))
     ],
     package_data={'': ['py.typed']},
     install_requires=['setuptools'],
@@ -32,4 +35,3 @@ setup(
     },
 
 )
-

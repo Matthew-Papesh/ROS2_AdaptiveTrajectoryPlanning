@@ -1,4 +1,4 @@
 import sys
 if sys.prefix == '/usr':
     sys.real_prefix = sys.prefix
-    sys.prefix = sys.exec_prefix = '/home/matthew-papesh/Documents/GitHub/ROS2_TrajectoryPlanning/navigation/install/navigation'
+    sys.prefix = sys.exec_prefix = '/home/matthew-papesh/dev_ws/src/navigation/install/navigation'

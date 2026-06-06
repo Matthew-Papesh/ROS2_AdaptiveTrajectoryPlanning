@@ -12,7 +12,7 @@ from geometry_msgs.msg import PoseStamped
 
 # plotting flags
 RVIZ_PLOT_GRIDCELLS = True
-MATPLOTLIB_PLOT_QUINTIC = True
+MATPLOTLIB_PLOT_QUINTIC = False
 
 class SplinePath(Node):
     """
@@ -107,7 +107,8 @@ class SplinePath(Node):
             
             # compute the relative quintic spline function
             q = Quintic(p_origin, p_rel)
-            q.optimize_and_show(epochs=100, k0=0.0, k1=0.0, T0=100, step_size=1)
+            q.set_obstacles([(1,0)], 0.75)
+            q.optimize(epochs=100, k0=0.0, k1=0.0, T0=50, step_size=1)
             # the specified number of points to partition and interpolate
             partition_density = 50.0 
             euclid_distance = handler.euclid_distance((0.0, 0.0), (rel_x, rel_y))
