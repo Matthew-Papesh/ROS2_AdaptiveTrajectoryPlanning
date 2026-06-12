@@ -18,4 +18,4 @@ model.set_obstacles({
 #model.query_cost_map(200, (-10.0, 10.0), (-10.0, 10.0), export_file='spline_costs.csv')
 #model.import_query_cost_map(import_file='spline_costs.csv')
 #model.show_cost_map(show_cost_trend=True)
-model.optimize_and_show(epochs=100, k0=0.0, k1=0.0, T0=100, step_size=1)
+model.optimize_and_show(epochs=100, k0=0.0, k1=0.0, T0=100, step_size=1, x_lim=(-1, 10), y_lim=(-10, 10))

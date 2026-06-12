@@ -28,24 +28,54 @@ class Quintic:
         self.obstacles = np.empty((0,2), dtype=np.float64)
         self.obs_radius = 1.0
         self.max_inv = 3.0
+        # spline-space transformation before evaluating against obstacles
+        self.spline_to_obs_tf = (0, 0, 0)
         # Function coefficients
         self.A, self.B, self.C, self.D, self.E, self.F = 0, 0, 0, 0, 0, 0
         self.k_0, self.k_1 = 0, 0
         # Queried cost map 
         self.cost_query = {}
 
+        self.coeffs_x = None
+        self.coeffs_y = None
+        self.set_inverse_transform(0, 0, 0)
+
+
     def set_curvature(self, k_0: float, k_1: float): 
+        """
+        Defines the quintic model curvature. `compute_quintic()` must be called after setting these parameters.
+        :param k_0 [float] The specified first coefficient 
+        :param k_1 [float] The specified second coefficient
+        """
         self.k_0 = k_0
         self.k_1 = k_1
 
-    def set_obstacles(self, obstacles: set[tuple[float, float]], radius: float):
-        self.obstacles = np.array(list(obstacles), dtype=np.float64)
+    def set_obstacles(self, obstacles: set[tuple[float, float]] | np.ndarray, radius: float):
+        """
+        Defines the set of 2D obstacles for the quintic model to avoid. Each obstacle is a tuple singularity. 
+        Each obstacle has the same set radius from its center. 
+        :param obstacles [] The specified set of obstacles 
+        :param radius [float] The specified radius
+        """
+        if isinstance(obstacles, set):
+            self.obstacles = np.array(list(obstacles), dtype=np.float64)
+        elif isinstance(obstacles, np.ndarray):
+            self.obstacles = obstacles
         self.obs_radius = radius
+
+    def set_inverse_transform(self, x_origin: float, y_origin: float, theta_origin: float):
+        """
+        Defines a transformation between the quintic function frame of reference to the obstacle map's frame of reference. 
+        :param x_origin [float] Origin x for the global obstacle map 
+        :param y_origin [float] Origin y for the global obstacle map 
+        :param theta_origin [float] Origin orientation in radians for the global obstacle map
+        """
+        self.spline_to_obs_tf = (x_origin, y_origin, theta_origin)
 
     # Determines the quintic function coefficients such that the quintic tangentially instersects the specified waypoints
     def compute_quintic(self):
         """
-        Computes the coefficients of a quintic polynomial given the initial and final waypoints of the Quintic.
+        Computes the coefficients of a quintic polynomial into 100 samples of variable `t`.
         """
         # handle initializing waypoint 
         def init_waypoint(waypoint: PoseStamped | tuple[float, float, float]):
@@ -62,26 +92,63 @@ class Quintic:
         x_1, y_1, t_1 = init_waypoint(self.waypoint_1)
         k_0, k_1 = self.k_0, self.k_1
     
-        # coefficient formulas
-        self.A = (12*y_0 - 12*y_1 + k_0*pow(x_0,2) + k_0*pow(x_1,2) - k_1*pow(x_0,2) - k_1*pow(x_1,2) - 6*x_0*math.tan(t_0) - 6*x_0*math.tan(t_1) + 6*x_1*math.tan(t_0) + 6*x_1*math.tan(t_1) - 2*k_0*x_0*x_1 + 2*k_1*x_0*x_1)/(2*pow(x_0 - x_1,5))
-        self.B = (14*pow(x_0,2)*math.tan(t_0) + 16*pow(x_0,2)*math.tan(t_1) - 16*pow(x_1,2)*math.tan(t_0) - 14*pow(x_1,2)*math.tan(t_1) - 30*x_0*y_0 + 30*x_0*y_1 - 30*x_1*y_0 + 30*x_1*y_1 - 2*k_0*pow(x_0,3) - 3*k_0*pow(x_1,3) + 3*k_1*pow(x_0,3) + 2*k_1*pow(x_1,3) + 4*k_0*x_0*pow(x_1,2) + k_0*pow(x_0,2)*x_1 - k_1*x_0*pow(x_1,2) - 4*k_1*pow(x_0,2)*x_1 + 2*x_0*x_1*math.tan(t_0) - 2*x_0*x_1*math.tan(t_1))/(2*pow(x_0 - x_1,5))
-        self.C = -(8*pow(x_0,3)*math.tan(t_0) + 12*pow(x_0,3)*math.tan(t_1) - 12*pow(x_1,3)*math.tan(t_0) - 8*pow(x_1,3)*math.tan(t_1) - k_0*pow(x_0,4) - 3*k_0*pow(x_1,4) + 3*k_1*pow(x_0,4) + k_1*pow(x_1,4) - 20*pow(x_0,2)*y_0 + 20*pow(x_0,2)*y_1 - 20*pow(x_1,2)*y_0 + 20*pow(x_1,2)*y_1 - 4*k_0*pow(x_0,3)*x_1 + 4*k_1*x_0*pow(x_1,3) + 8*k_0*pow(x_0,2)*pow(x_1,2) - 8*k_1*pow(x_0,2)*pow(x_1,2) - 28*x_0*pow(x_1,2)*math.tan(t_0) + 32*pow(x_0,2)*x_1*math.tan(t_0) - 32*x_0*pow(x_1,2)*math.tan(t_1) + 28*pow(x_0,2)*x_1*math.tan(t_1) - 80*x_0*x_1*y_0 + 80*x_0*x_1*y_1)/(2*pow(x_0 - x_1,5))
-        self.D = -(k_0*pow(x_1,5) - k_1*pow(x_0,5) + 4*k_0*x_0*pow(x_1,4) + 3*k_0*pow(x_0,4)*x_1 - 3*k_1*x_0*pow(x_1,4) - 4*k_1*pow(x_0,4)*x_1 + 60*x_0*pow(x_1,2)*y_0 + 60*pow(x_0,2)*x_1*y_0 - 60*x_0*pow(x_1,2)*y_1 - 60*pow(x_0,2)*x_1*y_1 - 8*k_0*pow(x_0,2)*pow(x_1,3) + 8*k_1*pow(x_0,3)*pow(x_1,2) + 36*x_0*pow(x_1,3)*math.tan(t_0) - 24*pow(x_0,3)*x_1*math.tan(t_0) + 24*x_0*pow(x_1,3)*math.tan(t_1) - 36*pow(x_0,3)*x_1*math.tan(t_1) - 12*pow(x_0,2)*pow(x_1,2)*math.tan(t_0) + 12*pow(x_0,2)*pow(x_1,2)*math.tan(t_1))/(2*pow(x_0 - x_1,5))
-        self.E = (2*pow(x_0,5)*math.tan(t_1) - 2*pow(x_1,5)*math.tan(t_0) + 2*k_0*x_0*pow(x_1,5) - 2*k_1*pow(x_0,5)*x_1 - k_0*pow(x_0,2)*pow(x_1,4) - 4*k_0*pow(x_0,3)*pow(x_1,3) + 3*k_0*pow(x_0,4)*pow(x_1,2) - 3*k_1*pow(x_0,2)*pow(x_1,4) + 4*k_1*pow(x_0,3)*pow(x_1,3) + k_1*pow(x_0,4)*pow(x_1,2) + 60*pow(x_0,2)*pow(x_1,2)*y_0 - 60*pow(x_0,2)*pow(x_1,2)*y_1 + 10*x_0*pow(x_1,4)*math.tan(t_0) - 10*pow(x_0,4)*x_1*math.tan(t_1) + 16*pow(x_0,2)*pow(x_1,3)*math.tan(t_0) - 24*pow(x_0,3)*pow(x_1,2)*math.tan(t_0) + 24*pow(x_0,2)*pow(x_1,3)*math.tan(t_1) - 16*pow(x_0,3)*pow(x_1,2)*math.tan(t_1))/(2*pow(x_0 - x_1,5)) 
-        self.F = (2*pow(x_0,5)*y_1 - 2*pow(x_1,5)*y_0 + 10*x_0*pow(x_1,4)*y_0 - 10*pow(x_0,4)*x_1*y_1 - k_0*pow(x_0,2)*pow(x_1,5) + 2*k_0*pow(x_0,3)*pow(x_1,4) - k_0*pow(x_0,4)*pow(x_1,3) + k_1*pow(x_0,3)*pow(x_1,4) - 2*k_1*pow(x_0,4)*pow(x_1,3) + k_1*pow(x_0,5)*pow(x_1,2) - 20*pow(x_0,2)*pow(x_1,3)*y_0 + 20*pow(x_0,3)*pow(x_1,2)*y_1 + 2*x_0*pow(x_1,5)*math.tan(t_0) - 2*pow(x_0,5)*x_1*math.tan(t_1) - 10*pow(x_0,2)*pow(x_1,4)*math.tan(t_0) + 8*pow(x_0,3)*pow(x_1,3)*math.tan(t_0) - 8*pow(x_0,3)*pow(x_1,3)*math.tan(t_1) + 10*pow(x_0,4)*pow(x_1,2)*math.tan(t_1))/(2*pow(x_0 - x_1,5))
+        # define euclid distance between waypoints 
+        L = math.sqrt((x_1 - x_0)**2.0 + (y_1 - y_0)**2.0)
+        if L < 1e-5:
+            L = 1.0
+
+        # geometric first derivatives 
+        dx_0, dy_0 = L*math.cos(t_0), L*math.sin(t_0)
+        dx_1, dy_1 = L*math.cos(t_1), L*math.sin(t_1)
+
+        # geomtric second derivatives 
+        ddx_0 = -k_0 * (L**2.0) * math.sin(t_0)
+        ddy_0 =  k_0 * (L**2.0) * math.cos(t_0)
+        ddx_1 = -k_1 * (L**2.0) * math.sin(t_1)
+        ddy_1 =  k_1 * (L**2.0) * math.cos(t_1)
+
+        bx = np.array([x_0, dx_0, ddx_0, x_1, dx_1, ddx_1])
+        by = np.array([y_0, dy_0, ddy_0, y_1, dy_1, ddy_1])
     
-    # Represents the quintic function dependent on the domain of x
-    def f(self, x: float | np.ndarray) -> float | np.ndarray:
+        M_inv = np.array([
+            [ 1,  0,   0,    0,   0,   0],  # Coeff f (t^0)
+            [ 0,  1,   0,    0,   0,   0],  # Coeff e (t^1)
+            [ 0,  0, 0.5,    0,   0,   0],  # Coeff d (t^2)
+            [-10, -6, -1.5,  10,  -4, 0.5],  # Coeff c (t^3)
+            [ 15,  8,  1.5, -15,   7,  -1],  # Coeff b (t^4)
+            [-6,  -3, -0.5,   6,  -3, 0.5]   # Coeff a (t^5)
+        ])
+
+        self.coeffs_x = M_inv @ bx
+        self.coeffs_y = M_inv @ by
+     
+    # Represents the quintic function dependent on the domain of `t` bounded [0.0, 1.0]
+    def f(self, t: float | np.ndarray) -> tuple[float | np.ndarray, float | np.ndarray]:
         """
-        Represents the quintic function dependent on the domain of x.
+        Represents the quintic function dependent on the domain of `t` bounded by [0.0, 1.0].
         """
-        return ((((self.A * x + self.B) * x + self.C) * x + self.D) * x + self.E) * x + self.F
+        # evaluation: a*t^5 + b*t^4 + c*t^3 + d*t^2 + e*t + f
+        x = ((((self.coeffs_x[5]*t + self.coeffs_x[4])*t + self.coeffs_x[3])*t + self.coeffs_x[2])*t + self.coeffs_x[1])*t + self.coeffs_x[0]
+        y = ((((self.coeffs_y[5]*t + self.coeffs_y[4])*t + self.coeffs_y[3])*t + self.coeffs_y[2])*t + self.coeffs_y[1])*t + self.coeffs_y[0]
+        return x, y
     # Represents the derivative of the quintic function
-    def dydx(self, x: float | np.ndarray) -> float | np.ndarray:
+    def dydx(self, t: float | np.ndarray) -> tuple[float | np.ndarray, float | np.ndarray]:
         """
-        Represents the derivative of the quintic function on the domain of x.
+        Represents the derivative of the quintic function on the domain of `t` bounded by [0.0, 1.0].
         """
-        return (((5*self.A*x + 4*self.B)*x + 3*self.C)*x + 2*self.D)*x + self.E 
+        # evaluation: 5a*t^4 + 4b*t^3 + 3c*t^2 + 2d*t + e
+        dx = (((5*self.coeffs_x[5]*t + 4*self.coeffs_x[4])*t + 3*self.coeffs_x[3])*t + 2*self.coeffs_x[2])*t + self.coeffs_x[1]
+        dy = (((5*self.coeffs_y[5]*t + 4*self.coeffs_y[4])*t + 3*self.coeffs_y[3])*t + 2*self.coeffs_y[2])*t + self.coeffs_y[1]
+        return dx, dy
+    # Represents the second derivative of the quintic function
+    def ddydxx(self, t: float | np.ndarray):
+        """
+        Represents the second derivative of the quintic function on the domain of `t` bounded [0.0, 1.0]
+        """
+        # evaluation: 20a*t^3 + 12b*t^2 + 6c*t + 2d
+        dx = ((20*self.coeffs_x[5]*t + 12*self.coeffs_x[4])*t + 6*self.coeffs_x[3])*t + 2*self.coeffs_x[2]
+        dy = ((20*self.coeffs_y[5]*t + 12*self.coeffs_y[4])*t + 6*self.coeffs_y[3])*t + 2*self.coeffs_y[2]
+        return dx, dy
 
     def cost(self, spline_partitions: int=100):
         """
@@ -90,34 +157,75 @@ class Quintic:
         :param x1 [float] The final x value to compute the length to
         :param steps [int] The number of steps to use in approximating the length (higher is more accurate but more computationally expensive)
         """
-        x0 = self.waypoint_0.pose.position.x if isinstance(self.waypoint_0, PoseStamped) else self.waypoint_0[0]
-        x1 = self.waypoint_1.pose.position.x if isinstance(self.waypoint_1, PoseStamped) else self.waypoint_1[0]
-        delta_x = (x1-x0)/spline_partitions
-        cost = 0
-
+        # the distance array allows for this activation function allows for evaluating against several vectorized obstacles at once
         def step(distance: np.ndarray, radius: float) -> np.ndarray:
+            """
+            Defines a continuous sigmoid step function that collapses for distances larger than the specified radius. 
+            :param distance [np.ndarray] A specified distance away from a given obstacle to evaluate 
+            :param radius [float] The radius the sigmoid output collapses for distances that exceed the threshold
+            :returns The sigmoid step output
+            """
             return 1.0 / (1.0 + np.exp(100.0*(distance - radius)))
+        # the distance array for this function allows for evaluating against several vectorized obstacles at once 
         def inv_distance(distance: np.ndarray, max_inv: float) -> np.ndarray:
+            """
+            Defines an inverse distance relationship for a given distance. This represents an inversely proportional relationship such that the maximum output 
+            specified cannot be exceeded at a distance=0. This is not a direct inverse or reciprocal of the specified distance, but is phased by the max inverse provided.  
+            :param distance [np.ndarray] The specified distance away from a given obstical to compute inverse for
+            :param max_inv [float] The maximum, non-negative, inverse that can be returned; this phase-offsets the x-domain to avoid divide-by-zero exceptions 
+            :returns The phase-offset inverse result 
+            """
             return max_inv / (max_inv*distance + 1.0)
 
-        def obs_cost(x: float, y: float) -> float:
-            Wx = self.obstacles[:, 0]
-            Wy = self.obstacles[:, 1]
-            dx, dy = Wx-x, Wy-y
-            # create distance vector 
-            dist = np.sqrt(dx*dx + dy*dy)
-            return float(np.sum(step(dist, self.obs_radius) * inv_distance(dist, self.max_inv)))
+        def obs_cost(x: float | np.ndarray, y: float | np.ndarray) -> float | np.ndarray:
+            """
+            Defines the cost map component for avoiding obstacles (obs). This function is called iteratively 
+            while stepping along the arc of the spline and summed as a total obstacle cost.   
+            :param x [float] The specified instantaneous x point along the spline arc
+            :param y [float] The specified instantaneous y point along the spline arc 
+            :returns The instantaneous obstacle sub-cost at (x,f(x)) along spline arc
+            """
+            # casts all inputs to np array for N rows of (x,y) points
+            x_array = np.atleast_1d(x) # arrays of Nx1 shape
+            y_array = np.atleast_1d(y)
 
-        for i in range(spline_partitions):
-            x = x0 + i*delta_x
-            y = self.f(x)
-            dydx = self.dydx(x)
+            # retrieve coords for M obstacles: Wx and Wy are Mx1 shape
+            Wx = self.obstacles[:, 0][:, np.newaxis] 
+            Wy = self.obstacles[:, 1][:, np.newaxis]
+            
+            # transform coord (x,y) to global obstacle map: Nx1 shape for both outputs
+            tf_x, tf_y = handler.rotate(x_array, y_array, self.spline_to_obs_tf[2])
+            tf_x += self.spline_to_obs_tf[0]
+            tf_y += self.spline_to_obs_tf[1]
+            # cast to np array
+            tf_x = np.atleast_1d(tf_x)
+            tf_y = np.atleast_1d(tf_y)
 
-            length_cost = 10.0*math.log(1+dydx**2)
-            obstical_cost = 100.0*obs_cost(x, y)
-            k_mag = np.sqrt((self.k_0**2) + (self.k_1**2))
-            cost += (length_cost + obstical_cost) * (1.0 + np.log10(k_mag + 1.0))
-        return cost
+            # calculate distances for each N of the (x,y) points 
+            dx = Wx - tf_x # shape of MxN
+            dy = Wy - tf_y
+            # create distance matrix shape MxN
+            dist = np.sqrt(dx*dx + dy*dy) 
+
+            # calculates sub costs against each obstacle across rows; each column is a point (x,y) shape MxN
+            sub_costs = step(dist, self.obs_radius) * inv_distance(dist, self.max_inv)
+            point_costs = np.sum(sub_costs, axis=0) # vector of obs costs across spline 
+            return point_costs.T
+
+        # interpolate parametric quintic 
+        t_data = np.linspace(0, 1, spline_partitions)
+        x_arr, y_arr = self.f(t_data)
+        dtdx, dtdy = self.dydx(t_data)
+        d2tdx2, d2dy2 = self.ddydxx(t_data) 
+
+        # find interpolated sub-costs 
+        length_cost = dtdx**2+dtdy**2
+        smooth_cost = d2tdx2**2+d2dy2**2
+        obstacle_cost = 10*obs_cost(x_arr, y_arr) 
+        # calculate costs 
+        sub_costs = length_cost + smooth_cost + obstacle_cost
+        # sum point costs for total cost
+        return sub_costs.sum(axis=0)
     
     def query_cost_map(self, axis_partitions: int, k0_range: tuple[float, float], k1_range: tuple[float, float], export_file: str=None) -> dict:
         kd0 = (k0_range[1]-k0_range[0]) / float(axis_partitions)
@@ -296,7 +404,7 @@ class Quintic:
         curr_cost = self.cost()
         T = T0 # init temperature
         rng = np.random.default_rng() # init rng
-        beta, guess_min_k0, guess_min_k1,_ = self.get_cost_trend_surface(n_ring=30, n_origin=5) # precompute cost trend 
+        beta, guess_min_k0, guess_min_k1,_ = self.get_cost_trend_surface(n_ring=50, n_origin=10) # precompute cost trend 
 
         dtdk0, dtdk1 = beta[1], beta[2] # extract cost trend coefficients
         push_scaler = np.sqrt(guess_min_k0**2.0 + guess_min_k1**2.0) 
@@ -306,7 +414,7 @@ class Quintic:
         for epoch in range(0, epochs):
             # find next k params 
             curr_step_size = step_size/(1+0.005*epoch) 
-            alpha = push_scaler / (epoch**2.0 + push_scaler)# 1.0 -> 0.0
+            alpha = push_scaler / (epoch**2.0 + push_scaler)# converges epoch:0->inf. => alpha:1->0
             dk0, dk1 = rng.normal(0, curr_step_size, size=2)
             next_k0 = k0 + (1.0-alpha)*dk0 - alpha*dtdk0
             next_k1 = k1 + (1.0-alpha)*dk1 - alpha*dtdk1
@@ -336,7 +444,7 @@ class Quintic:
             T = T0/(1+epoch)
             # print progress state 
             if print_progress:
-                print(f"""prog: {int(100.0 * (epoch+1)/epochs)}% => [ step_size={curr_step_size:.3f}, T={T:.3f},    cost={curr_cost},   (k0,k1)=({k0:.3f}, {k1:.3f}),   push_scaler={push_scaler} ]""")
+                print(f"""spline opt prog: {int(100.0 * (epoch+1)/epochs)}% => [ step_size={curr_step_size:.3f}, T={T:.3f},    cost={curr_cost},   (k0,k1)=({k0:.3f}, {k1:.3f}),   push_scaler={push_scaler} ]""")
             # handle any callback 
             if callback_event is not None:
                 callback_event(epoch)
@@ -346,7 +454,7 @@ class Quintic:
         self.compute_quintic()
         return (k0, k1, curr_cost)
 
-    def optimize_and_show(self, epochs: int, k0: float=0.0, k1: float=0.0, T0: float=100.0, step_size: float=3.0, push_sensitivity: float=1.5, max_push_scaler: float=5.0) -> tuple[float, float, float]:
+    def optimize_and_show(self, epochs: int, k0: float=0.0, k1: float=0.0, T0: float=100.0, step_size: float=3.0, push_sensitivity: float=1.5, max_push_scaler: float=5.0, x_lim: tuple[float, float]=(-1,6), y_lim: tuple[float, float]=(-1,6)) -> tuple[float, float, float]:
         """
         Optimizes the quintic function's curvature parameters (k0, k1) using simulated annealing and visualizes the optimization process using matplotlib.
         :param epochs [int] The number of optimization epochs to run
@@ -367,11 +475,9 @@ class Quintic:
             :param linewidth [float] The width of the quintic curve line
             :param alpha [float] The alpha value for drawing
             """
-            ax.set_xlim(-1, 10) # set graph limits 
-            ax.set_ylim(-10, 10)
+            ax.set_xlim(x_lim[0], x_lim[1]) # set graph limits 
+            ax.set_ylim(y_lim[0], y_lim[1])
             # setup for drawing 
-            x0 = self.waypoint_0.pose.position.x if isinstance(self.waypoint_0, PoseStamped) else self.waypoint_0[0]
-            x1 = self.waypoint_1.pose.position.x if isinstance(self.waypoint_1, PoseStamped) else self.waypoint_1[0]
             partitions = 100
 
             # draw obstacles 
@@ -384,9 +490,14 @@ class Quintic:
                     ax.add_patch(safety_circle)
 
             # draw quintic curve
-            x_data = np.linspace(x0, x1, partitions)
-            y_data = self.f(x_data)
-            ax.plot(x_data, y_data, color=color, alpha=0.08, linewidth=linewidth, zorder=2)
+            t_data = np.linspace(0, 1, partitions)
+            x_data, y_data = self.f(t_data)
+            # transform coord (x,y) to global obstacle map 
+            tf_x, tf_y = handler.rotate(x_data, y_data, self.spline_to_obs_tf[2])
+            tf_x += self.spline_to_obs_tf[0]
+            tf_y += self.spline_to_obs_tf[1]
+
+            ax.plot(tf_x, tf_y, color=color, alpha=0.08, linewidth=linewidth, zorder=2)
             fig.canvas.draw()
             fig.canvas.flush_events()
 
@@ -408,7 +519,7 @@ class Quintic:
             step_size=step_size, 
             push_sensitivity=push_sensitivity, 
             max_push_scaler=max_push_scaler,
-            print_progress=True
+            print_progress=False
         )
         # final drawing loop to show final curve with higher opacity
         for i in range(0,10):
@@ -439,10 +550,7 @@ class Quintic:
             step_size=step_size, 
             push_sensitivity=push_sensitivity, 
             max_push_scaler=max_push_scaler,
-            print_progress=True
+            print_progress=False
         )
-        # print final results and show plot
-        final_cost = self.cost()
-        print(f"Done:100% => [ cost={final_cost},   (k0,k1)=({final_k0:.3f}, {final_k1:.3f}) ]")    
         return (final_k0, final_k1, final_cost)
             

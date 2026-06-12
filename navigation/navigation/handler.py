@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import math
+import numpy as np
 from ament_index_python.packages import get_package_share_directory
 from geometry_msgs.msg import PoseStamped, Point, Quaternion
 from nav_msgs.msg import Path, GridCells
@@ -143,16 +144,16 @@ def non_zero(x: float, tolerance: float):
     sgn = 1.0 if x >= 0 else -1.0
     return magnitude * sgn
 
-def rotate(x: float, y: float, radians: float) -> tuple[float, float]:
+def rotate(x: float | np.ndarray, y: float | np.ndarray, radians: float) -> tuple[float, float] | tuple[np.ndarray, np.ndarray]:
     """
     Computes a rotational transformation on a vector (x,y) about the origin with the radians specified. 
-    :param x [float] The specified x
-    :param y [float] The specified y
+    :param x [float | np.ndarray] The specified x
+    :param y [float | np.ndarray] The specified y
     :param radians [float] The specified radians to rotate
     :returns the rotated vector
     """
-    x_prime = x*math.cos(radians) - y*math.sin(radians)
-    y_prime = x*math.sin(radians) + y*math.cos(radians) 
+    x_prime = x*np.cos(radians) - y*np.sin(radians)
+    y_prime = x*np.sin(radians) + y*np.cos(radians) 
     return (x_prime, y_prime)
 
 def get_circle(p_0: tuple[float, float], p_1: tuple[float, float], p_2: tuple[float, float]) -> tuple[float, float, float]:
