@@ -13,7 +13,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), ['launch/sim.launch.py']),
         (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
-        (os.path.join('share', package_name, 'maps'), glob('maps/*'))
+        (os.path.join('share', package_name, 'maps'), glob('maps/*')),
     ],
     package_data={'': ['py.typed']},
     install_requires=['setuptools'],
@@ -29,6 +29,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'quintic_test_node = navigation.quintic_test:main', 
             'nav_node = navigation.navigator:main',
             'spline_node = navigation.spline:main',
         ],

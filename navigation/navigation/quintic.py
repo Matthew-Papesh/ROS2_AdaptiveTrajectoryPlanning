@@ -8,7 +8,6 @@ import navigation.handler as handler
 
 import math
 import numpy as np
-import time
 import csv
 
 # Represents the relative quintic function to compute subpoints from 
@@ -31,7 +30,6 @@ class Quintic:
         # spline-space transformation before evaluating against obstacles
         self.spline_to_obs_tf = (0, 0, 0)
         # Function coefficients
-        self.A, self.B, self.C, self.D, self.E, self.F = 0, 0, 0, 0, 0, 0
         self.k_0, self.k_1 = 0, 0
         # Queried cost map 
         self.cost_query = {}
@@ -150,12 +148,13 @@ class Quintic:
         dy = ((20*self.coeffs_y[5]*t + 12*self.coeffs_y[4])*t + 6*self.coeffs_y[3])*t + 2*self.coeffs_y[2]
         return dx, dy
 
-    def cost(self, spline_partitions: int=100):
+    def cost(self, spline_partitions: int=100) -> tuple[int, np.ndarray, np.ndarray]:
         """
         Represents the length of the quintic curve between the specified x0 and x1 values.
         :param x0 [float] The initial x value to compute the length from
         :param x1 [float] The final x value to compute the length to
         :param steps [int] The number of steps to use in approximating the length (higher is more accurate but more computationally expensive)
+        :returns The cost of the candidate spline and global coordinate of generated candidate spline
         """
         # the distance array allows for this activation function allows for evaluating against several vectorized obstacles at once
         def step(distance: np.ndarray, radius: float) -> np.ndarray:
@@ -165,7 +164,8 @@ class Quintic:
             :param radius [float] The radius the sigmoid output collapses for distances that exceed the threshold
             :returns The sigmoid step output
             """
-            return 1.0 / (1.0 + np.exp(100.0*(distance - radius)))
+            exponent = np.clip(100.0 * (distance - radius), -500, 500)
+            return 1.0 / (1.0 + np.exp(exponent))
         # the distance array for this function allows for evaluating against several vectorized obstacles at once 
         def inv_distance(distance: np.ndarray, max_inv: float) -> np.ndarray:
             """
@@ -177,38 +177,31 @@ class Quintic:
             """
             return max_inv / (max_inv*distance + 1.0)
 
-        def obs_cost(x: float | np.ndarray, y: float | np.ndarray) -> float | np.ndarray:
+        def obs_cost(x: np.ndarray, y: np.ndarray) -> np.ndarray:
             """
             Defines the cost map component for avoiding obstacles (obs). This function is called iteratively 
             while stepping along the arc of the spline and summed as a total obstacle cost.   
-            :param x [float] The specified instantaneous x point along the spline arc
-            :param y [float] The specified instantaneous y point along the spline arc 
-            :returns The instantaneous obstacle sub-cost at (x,f(x)) along spline arc
+            :param x [np.ndarray] The specified instantaneous x point along the spline arc
+            :param y [np.ndarray] The specified instantaneous y point along the spline arc 
+            :returns The instantaneous obstacle sub-cost
             """
             # casts all inputs to np array for N rows of (x,y) points
-            x_array = np.atleast_1d(x) # arrays of Nx1 shape
-            y_array = np.atleast_1d(y)
+            x_arr = np.atleast_1d(x) # arrays of Nx1 shape
+            y_arr = np.atleast_1d(y)
 
             # retrieve coords for M obstacles: Wx and Wy are Mx1 shape
             Wx = self.obstacles[:, 0][:, np.newaxis] 
             Wy = self.obstacles[:, 1][:, np.newaxis]
-            
-            # transform coord (x,y) to global obstacle map: Nx1 shape for both outputs
-            tf_x, tf_y = handler.rotate(x_array, y_array, self.spline_to_obs_tf[2])
-            tf_x += self.spline_to_obs_tf[0]
-            tf_y += self.spline_to_obs_tf[1]
-            # cast to np array
-            tf_x = np.atleast_1d(tf_x)
-            tf_y = np.atleast_1d(tf_y)
 
             # calculate distances for each N of the (x,y) points 
-            dx = Wx - tf_x # shape of MxN
-            dy = Wy - tf_y
+            dx = Wx - x_arr # shape of MxN
+            dy = Wy - y_arr
             # create distance matrix shape MxN
             dist = np.sqrt(dx*dx + dy*dy) 
 
             # calculates sub costs against each obstacle across rows; each column is a point (x,y) shape MxN
             sub_costs = step(dist, self.obs_radius) * inv_distance(dist, self.max_inv)
+            sub_costs = np.cumsum(sub_costs, axis=1)
             point_costs = np.sum(sub_costs, axis=0) # vector of obs costs across spline 
             return point_costs.T
 
@@ -218,14 +211,23 @@ class Quintic:
         dtdx, dtdy = self.dydx(t_data)
         d2tdx2, d2dy2 = self.ddydxx(t_data) 
 
+        # transform coord (x,y) to global obstacle map: Nx1 shape for both outputs
+        tf_x, tf_y = handler.rotate(x_arr, y_arr, self.spline_to_obs_tf[2])
+        tf_x += self.spline_to_obs_tf[0]
+        tf_y += self.spline_to_obs_tf[1]
+        # cast to np array
+        tf_x = np.atleast_1d(tf_x)
+        tf_y = np.atleast_1d(tf_y)
+
+        C = 0.00001 # tuning coefficient 
         # find interpolated sub-costs 
-        length_cost = dtdx**2+dtdy**2
-        smooth_cost = d2tdx2**2+d2dy2**2
-        obstacle_cost = 10*obs_cost(x_arr, y_arr) 
+        length_cost = C*(dtdx**2+dtdy**2)
+        smooth_cost = C*(d2tdx2**2+d2dy2**2)
+        obstacle_cost = obs_cost(tf_x, tf_y)
         # calculate costs 
         sub_costs = length_cost + smooth_cost + obstacle_cost
         # sum point costs for total cost
-        return sub_costs.sum(axis=0)
+        return sub_costs.sum(axis=0), tf_x, tf_y
     
     def query_cost_map(self, axis_partitions: int, k0_range: tuple[float, float], k1_range: tuple[float, float], export_file: str=None) -> dict:
         kd0 = (k0_range[1]-k0_range[0]) / float(axis_partitions)
@@ -248,7 +250,7 @@ class Quintic:
                 k1 = round(k1_range[0] + k1idx*kd1, 3)
                 self.set_curvature(k0, k1)
                 self.compute_quintic()
-                cost = self.cost()
+                cost, _, _ = self.cost()
                 query[(k0,k1)] = cost
 
                 if export_file is not None:
@@ -299,7 +301,7 @@ class Quintic:
         scatter=None
 
         if show_cost_trend:
-            beta, k0_min_path, k1_min_path, min_cost = self.get_cost_trend_surface(n_ring=20, n_origin=3)
+            beta, k0_min_path, k1_min_path, min_cost = self.get_cost_trend_surface()
             print(f"Cost trend surface coefficients: {beta}, min path: ({k0_min_path}, {k1_min_path}), cost: {min_cost}")   
             # define a simple 2x2 grid representing k-space corners 
             k0_min, k0_max = k0_vals.min(), k0_vals.max()
@@ -350,7 +352,7 @@ class Quintic:
             # set sample point and find cost
             self.set_curvature(k0s[i], k1s[i])
             self.compute_quintic()
-            costs[i] = self.cost()
+            costs[i], _, _ = self.cost()
             # track best path sampled
             if min_path[2] is None or costs[i] < min_path[2]:
                 min_path = (k0s[i], k1s[i], costs[i])
@@ -386,10 +388,10 @@ class Quintic:
         # return results: surface constraints, and best guess for global minimum cost (k0, k1, and cost)
         return beta, centroid_k0, centroid_k1, centroid_cost
 
-    def run_optimization(self, callback_event: Callable[[int], None] | None, epochs: int, k0: float=0.0, k1: float=0.0, T0: float=100.0, step_size: float=3.0, push_sensitivity: float=1.5, max_push_scaler: float=5.0, print_progress: bool=False) -> tuple[float, float, float]:
+    def run_optimization(self, callback_event: Callable[[int, np.ndarray, np.ndarray], None] | None, epochs: int, k0: float=0.0, k1: float=0.0, T0: float=100.0, step_size: float=3.0, push_sensitivity: float=1.5, max_push_scaler: float=5.0, print_progress: bool=False) -> tuple[float, float, float]:
         """
         Trains quintic function's curvature parameters (k0, k1) with simulated annealing.
-        :param callback_event [Callable[[int], None] | None] An optional callback function that takes the current epoch as an argument and is called at the end of each optimization epoch (can be used for visualization or logging purposes)
+        :param callback_event [Callable[[int], None] | None] An optional callback function that takes in the current training epoch and global candidate spline coordinates (can be used for visualization or logging purposes)
         :param epochs [int] The number of optimization epochs to run
         :param k0 [float] The initial k0 curvature parameter to start optimization from
         :param k1 [float] The initial k1 curvature parameter to start optimization from
@@ -401,10 +403,10 @@ class Quintic:
         # init quintic function
         self.set_curvature(k0, k1)
         self.compute_quintic()
-        curr_cost = self.cost()
+        curr_cost, _, _ = self.cost()
         T = T0 # init temperature
         rng = np.random.default_rng() # init rng
-        beta, guess_min_k0, guess_min_k1,_ = self.get_cost_trend_surface(n_ring=50, n_origin=10) # precompute cost trend 
+        beta, guess_min_k0, guess_min_k1, _ = self.get_cost_trend_surface() # precompute cost trend 
 
         dtdk0, dtdk1 = beta[1], beta[2] # extract cost trend coefficients
         push_scaler = np.sqrt(guess_min_k0**2.0 + guess_min_k1**2.0) 
@@ -413,8 +415,8 @@ class Quintic:
         # begin training loop
         for epoch in range(0, epochs):
             # find next k params 
-            curr_step_size = step_size/(1+0.005*epoch) 
-            alpha = push_scaler / (epoch**2.0 + push_scaler)# converges epoch:0->inf. => alpha:1->0
+            curr_step_size = step_size/(1+0.00005*epoch) 
+            alpha = push_scaler / ((1+0.00005*epoch)**2.0 + push_scaler)# converges epoch:0->inf. => alpha:1->0
             dk0, dk1 = rng.normal(0, curr_step_size, size=2)
             next_k0 = k0 + (1.0-alpha)*dk0 - alpha*dtdk0
             next_k1 = k1 + (1.0-alpha)*dk1 - alpha*dtdk1
@@ -422,7 +424,7 @@ class Quintic:
             # compute next cost
             self.set_curvature(next_k0, next_k1)
             self.compute_quintic()
-            next_cost = self.cost()
+            next_cost, x_arr, y_arr = self.cost() # cost and candidate spline in global coords
             dcost = next_cost - curr_cost
 
             # update k params if new cost is lesser 
@@ -444,17 +446,17 @@ class Quintic:
             T = T0/(1+epoch)
             # print progress state 
             if print_progress:
-                print(f"""spline opt prog: {int(100.0 * (epoch+1)/epochs)}% => [ step_size={curr_step_size:.3f}, T={T:.3f},    cost={curr_cost},   (k0,k1)=({k0:.3f}, {k1:.3f}),   push_scaler={push_scaler} ]""")
+                print(f"spline opt progress: {int(100.0 * (epoch+1)/epochs)}% => [ step_size={curr_step_size:.3f}, T={T:.3f},    cost={round(curr_cost, 5)},   (k0,k1)=({k0:.3f}, {k1:.3f}),   push_scaler={round(push_scaler, 5)} ]")
             # handle any callback 
-            if callback_event is not None:
-                callback_event(epoch)
+            if callback_event is not None: # epoch and current spline
+                callback_event(epoch, x_arr, y_arr)
 
         # final k param update and return results
         self.set_curvature(k0, k1)
         self.compute_quintic()
         return (k0, k1, curr_cost)
 
-    def optimize_and_show(self, epochs: int, k0: float=0.0, k1: float=0.0, T0: float=100.0, step_size: float=3.0, push_sensitivity: float=1.5, max_push_scaler: float=5.0, x_lim: tuple[float, float]=(-1,6), y_lim: tuple[float, float]=(-1,6)) -> tuple[float, float, float]:
+    def optimize_and_show(self, epochs: int, k0: float=0.0, k1: float=0.0, T0: float=100.0, step_size: float=3.0, push_sensitivity: float=1.5, max_push_scaler: float=5.0, x_lim: tuple[float, float]=(-1,6), y_lim: tuple[float, float]=(-1,6), print_progress: bool=False) -> tuple[float, float, float]:
         """
         Optimizes the quintic function's curvature parameters (k0, k1) using simulated annealing and visualizes the optimization process using matplotlib.
         :param epochs [int] The number of optimization epochs to run
@@ -498,6 +500,7 @@ class Quintic:
             tf_y += self.spline_to_obs_tf[1]
 
             ax.plot(tf_x, tf_y, color=color, alpha=0.08, linewidth=linewidth, zorder=2)
+            ax.set_title(f"Spline Simulated Annealing: (k0,k1)={(round(self.k_0, 3), round(self.k_1, 3))}")
             fig.canvas.draw()
             fig.canvas.flush_events()
 
@@ -507,7 +510,7 @@ class Quintic:
         cmap = plt.get_cmap('plasma')
 
         # drawing handler for optimization loop
-        def handle_draw(epoch: int):
+        def handle_draw(epoch: int, x_arr: np.ndarray, y_arr: np.ndarray):
             draw(fig=fig2d, ax=ax2d, draw_obstacles=epoch==0, color=cmap(epoch/epochs), linewidth=1.5, alpha=0.8)
         # run optimization loop with drawing callback
         final_k0, final_k1, final_cost = self.run_optimization(
@@ -519,7 +522,7 @@ class Quintic:
             step_size=step_size, 
             push_sensitivity=push_sensitivity, 
             max_push_scaler=max_push_scaler,
-            print_progress=False
+            print_progress=print_progress
         )
         # final drawing loop to show final curve with higher opacity
         for i in range(0,10):
@@ -530,7 +533,7 @@ class Quintic:
         plt.show()
         return (final_k0, final_k1, final_cost)
 
-    def optimize(self, epochs: int, k0: float=0.0, k1: float=0.0, T0: float=100.0, step_size: float=3.0, push_sensitivity: float=1.5, max_push_scaler: float=5.0) -> tuple[float, float, float]:
+    def optimize(self, epochs: int, k0: float=0.0, k1: float=0.0, T0: float=100.0, step_size: float=3.0, push_sensitivity: float=1.5, max_push_scaler: float=5.0, callback_event: Callable[[int, np.ndarray, np.ndarray], None]=None) -> tuple[float, float, float]:
         """
         Optimizes the quintic function's curvature parameters (k0, k1) using simulated annealing without visualization.
         :param epochs [int] The number of optimization epochs to run
@@ -542,7 +545,7 @@ class Quintic:
         """
         # run optimization loop without drawing callback
         final_k0, final_k1, final_cost = self.run_optimization(
-            callback_event=None, 
+            callback_event=callback_event, 
             epochs=epochs, 
             k0=k0, 
             k1=k1, 

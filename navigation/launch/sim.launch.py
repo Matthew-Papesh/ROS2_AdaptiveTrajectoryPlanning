@@ -88,6 +88,29 @@ def generate_launch_description():
         ]
     )
 
+    # nav node handles A* path search, motion profiling, and goal pose nav 
+    navigator = Node(
+        package="navigation",
+        executable="nav_node",
+        name="nav_node",
+        output="screen",                
+        emulate_tty=True,               
+        parameters=[                    
+            {"use_sim_time": True}
+        ]
+    )
+    # creates and optimizes quintic spline paths for navigator
+    spline = Node(
+        package="navigation",
+        executable="spline_node", 
+        name="spline_node", 
+        output="screen",
+        emulate_tty=True,
+        parameters=[
+            {"use_sim_time": True}
+        ]
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument("x_pose", default_value=x_pose, description="Robot X initial position"),
         DeclareLaunchArgument("y_pose", default_value=y_pose, description="Robot Y initial position"),
@@ -98,5 +121,7 @@ def generate_launch_description():
         lifecycle_manager,
         map_server,
         map_odom_tf,
-        rviz
+        rviz, 
+        navigator, 
+        spline
     ])

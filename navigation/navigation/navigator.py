@@ -2,7 +2,7 @@
 import rclpy 
 from rclpy.node import Node 
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
-from geometry_msgs.msg import TwistStamped, PoseStamped, Point
+from geometry_msgs.msg import TwistStamped, PoseStamped, PoseWithCovariance, Point
 from nav_msgs.msg import Path, Odometry, OccupancyGrid, GridCells
 from visualization_msgs.msg import Marker, MarkerArray
 from navigation_interfaces.srv import Spline
@@ -46,8 +46,9 @@ class Navigator(Node):
         self.waypoint_marker_pub_ = self.create_publisher(MarkerArray, "/navigator/waypoint_markers", self.map_qos)
         # create subscribers 
         self.odom_sub_ = self.create_subscription(Odometry, "/odom", self.odom_callback, self.odom_qos)
-        self.map_sub = self.create_subscription(OccupancyGrid, "/map", self.map_callback, self.map_qos)
-       
+        self.map_sub_ = self.create_subscription(OccupancyGrid, "/map", self.map_callback, self.map_qos)
+        self.goal_pose_sub_ = self.create_subscription(PoseStamped, "/goal_pose", self.goal_pose_callback, 10)
+
         # create timer
         self.timer = self.create_timer(1, self.loop)
         # create service clients 
@@ -59,6 +60,7 @@ class Navigator(Node):
 
         # class positions fields
         self.curr_position = handler.get_pose_stamped(0,0,0)
+        self.goal_position = None
         self.curr_speed = TwistStamped()
         # class map fields 
         self.map_data = None
@@ -95,7 +97,7 @@ class Navigator(Node):
             self.set_speed(0,0)
             self.get_logger().info("Waiting for spline service")
 
-    def odom_callback(self, msg: PoseStamped):
+    def odom_callback(self, msg: PoseWithCovariance):
         """
         Callback function for odometry listener
         """
@@ -116,23 +118,43 @@ class Navigator(Node):
         self.map_header = msg.header
         self.set_cspace_data(inflation_radius=self.map_res) 
 
-        xy = (4, 1.7)
-        p = self.get_simple_path(0,0,xy[0],xy[1])
-        pose = handler.get_pose_stamped(xy[0], xy[1], 0)
-        w = self.get_spline_path_waypoints(self.curr_position, pose)
-        self.set_rviz_simple_path(p)
-        self.set_rviz_waypoint_markers(w)
-        self.request_spline(waypoints=w)
+    def goal_pose_callback(self, msg: PoseStamped): 
+        """
+        Callback function for goal pose listener
+        """
+        heading = handler.get_heading(msg.pose.orientation)
+        self.goal_position = PoseStamped()
+        self.goal_position.pose.position.x = float(msg.pose.position.x)
+        self.goal_position.pose.position.y = float(msg.pose.position.y)
+        self.goal_position.pose.orientation = handler.get_orientation(heading)
+        self.goal_position.header.frame_id = str(msg.header.frame_id)
+
+        # run spline driving with waypoints to goal position 
+        self.waypoints = self.get_spline_path_waypoints(self.curr_position, self.goal_position)
+        if self.waypoints is None: 
+            self.goal_position = None
+            self.waypoints = [] # reset 
+            return
+        self.set_rviz_waypoint_markers(self.waypoints)
+        self.request_spline(self.waypoints)
 
     def driver_thread_handler(self):
         """
         Handler that is called upon opening a thread for motion-profiled spline driving. 
         """
+        if self.goal_position is None:
+            return # do nothing without goal
         try: 
+            self.point_turn_drive(
+                rotate=self.waypoints[0][2] - handler.get_heading(self.curr_position))
             self.drive_spline_path()
+            self.point_turn_drive(
+                rotate=handler.get_heading(self.goal_position) - self.waypoints[-1][2])
             self.reset_spline()
         finally:
+            # reset driving and navigation
             self.drive_running = False
+            self.goal_position = None 
 
     def get_markers(self, markers: list[tuple[float, float, float]]) -> MarkerArray:
         """
@@ -188,14 +210,14 @@ class Navigator(Node):
 
     def loop(self):
         """ Main node loop. """
-        #if self.waypoints is None or len(self.waypoints) == 0:
-        #    return
+        if self.goal_position is None:
+            return # do nothing without a goal
         if self.spline_path == None and not self.spline_called:
             # add initial robot position to the front of the waypoints and request interpolated spline path. 
             temp_waypoints = [(
                 self.curr_position.pose.position.x, 
                 self.curr_position.pose.position.y, 
-                handler.get_heading(self.curr_position)
+                self.waypoints[0][2] # point to next node
             )] + self.waypoints
 
             self.request_spline(waypoints=temp_waypoints)
@@ -399,6 +421,7 @@ class Navigator(Node):
         if path is None:
             return None
         
+        self.set_rviz_simple_path(path) # visualize path
         # takes the difference between two points 
         def diff(p0: tuple[float, float], p1: tuple[float, float]) -> np.ndarray: 
             return np.array(p1, dtype=np.float64) - np.array(p0, dtype=np.float64)
@@ -674,8 +697,33 @@ class Navigator(Node):
 
     def point_turn_drive(self, rotate: float): 
         """
+        Rotates the robot in-place by the specified angle. 
+        :param rotate [float] The specified angle in radians
         """
-        pass
+        # headings for turning
+        init_heading = handler.get_heading(self.curr_position)
+        final_heading = init_heading + rotate
+
+        # defines the error function for PID
+        def feedback_process_variable() -> float:
+            curr_heading = handler.get_heading(self.curr_position) 
+            error = final_heading - curr_heading
+            # map error between [-pi, +pi]
+            error = (error + math.pi) % (2.0*math.pi) - math.pi
+            return error
+        
+        # pid angular speed feedback controller 
+        angular_feedback = PID.PID(
+            kp=1.0, ki=0.0001, kd=0.5, 
+            process_variable=feedback_process_variable, 
+            set_point=lambda: 0.0, 
+            clegg_integration=True
+        ) 
+
+        speed = angular_feedback.output()
+        while abs(speed) >= 0.01: 
+            speed = angular_feedback.output()
+            self.set_speed(linear=0, angular=speed)
 
     def spline_drive(self, spline_path: Path, spline_sd_steps: list, spline_cumulative_sd_steps: list, acceleration: float, max_linear_speed: float, max_angular_speed: float, max_centripetal_acceleration: float):
         """
