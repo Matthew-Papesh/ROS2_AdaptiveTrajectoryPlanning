@@ -10,12 +10,12 @@ Trajectory planning involves (1) path planning and (2) motion planning. The firs
 Our robot creates paths to follow from quintic spline polynomials. Splines create organic and curved geomtric paths. These are excellent non-holonomic motion and smooth maneuvering. Our planner parses waypoints from an A-Star search to interpolate the spline path. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="border: none; border-collapse: collapse;">
-    <tr>
-        <td width="48%" valign="top" style="margin: 0; padding: 0;">
+    <tr style="border: none;">
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin-bottom: auto">This is your left side text. You can add descriptions, lists, or even small code blocks here.</p>
         </td>
-        <td width="4%"></td>
-        <td width="48%" style="margin: 0; padding: 0;">
+        <td width="4%" style="border: none;"></td>
+        <td width="48%" style="margin: 0; padding: 0; border: none;">
             <p align="center">
                 <img src="figures/fig_1.png" alt="B-Spline Path Smoothing" width="100%">
                 <figcaption><b>Figure 1:</b> <i>Illustrates spline path planning. <a href="https://doi.org/10.3390/machines13080710">[1]</a></i></figcaption>
