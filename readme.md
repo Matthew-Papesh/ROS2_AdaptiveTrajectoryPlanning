@@ -12,7 +12,12 @@ Our robot creates paths to follow from quintic spline polynomials. Splines creat
 <table border="0" cellpadding="0" cellspacing="0" style="border: none; border-collapse: collapse;">
     <tr style="border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
-            <p style="margin-bottom: auto">This is your left side text. You can add descriptions, lists, or even small code blocks here.</p>
+            <p style="margin-bottom: auto">
+                Splines take on several shapes and forms based on its curvature and the waypoints they interpolate. The A-Star search provides potential waypoints. But, waypoints must be selectively chosen from that set. Seen in <b>Figure 1</b>, a raw path is created from points connected by a dashed line, where a spline interpolates a subset of those points. 
+            </p><br>
+            <p style="margin-bottom: auto">
+                This becomes a balancing act. In our case, the A-Star path is the dashed line. Using fewer waypoints, the spline path  is smooth and has larger manuevers. But, it may be unclear what shape that spline takes on, and if it risks colliding with an obstacle. Conversely, using more waypoints constraints the spline onto the A-Star path that ensures it does not collide with obstacles. 
+            </p>
         </td>
         <td width="4%" style="border: none;"></td>
         <td width="48%" style="margin: 0; padding: 0; border: none;">
@@ -24,8 +29,11 @@ Our robot creates paths to follow from quintic spline polynomials. Splines creat
     </tr>
 </table>
 
+## 3.0 Design
 
-## N.0 References 
-[1] Sun, Z., Luo, Q., Zhang, Z., Peng, Y., Liu, Q., Zheng, S., & Liu, J. (2025). An Integrated Path Planning and Tracking Framework Based on Adaptive Heuristic JPS and B-Spline Optimization. Machines, 13(8), 710. https://doi.org/10.3390/machines13080710
+## 4.0 Results 
+
+## 5.0 References 
+[[1]](https://doi.org/10.3390/machines13080710) Sun, Z., Luo, Q., Zhang, Z., Peng, Y., Liu, Q., Zheng, S., & Liu, J. (2025). An Integrated Path Planning and Tracking Framework Based on Adaptive Heuristic JPS and B-Spline Optimization. Machines, 13(8), 710. [https://doi.org/10.3390/machines13080710](https://doi.org/10.3390/machines13080710)
 
 
