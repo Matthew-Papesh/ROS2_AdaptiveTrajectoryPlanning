@@ -9,7 +9,9 @@ Trajectory planning involves (1) path planning and (2) motion planning. The firs
 
 Our robot creates paths to follow from quintic spline polynomials. Splines create organic and curved geomtric paths. These are excellent non-holonomic motion and smooth maneuvering. Our planner parses waypoints from an A-Star search to interpolate the spline path. 
 
-<img src="figures/fig_1.png" style="width:25rem; height: 15rem; margin-left: 25%; margin-right: 25%">
+<p align="center">
+<img src="figures/fig_1.png" style="width:25rem; height: 15rem;">
+</p>
 
 ## N.0 References 
 Sun, Z., Luo, Q., Zhang, Z., Peng, Y., Liu, Q., Zheng, S., & Liu, J. (2025). An Integrated Path Planning and Tracking Framework Based on Adaptive Heuristic JPS and B-Spline Optimization. Machines, 13(8), 710. https://doi.org/10.3390/machines13080710
