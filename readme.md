@@ -9,13 +9,13 @@ Trajectory planning involves (1) path planning and (2) motion planning. The firs
 
 Our robot creates paths to follow from quintic spline polynomials. Splines create organic and curved geomtric paths. These are excellent non-holonomic motion and smooth maneuvering. Our planner parses waypoints from an A-Star search to interpolate the spline path. 
 
-<table border="0" cellpadding="0" cellspacing="0" style="border: none; border-collapse: collapse;">
-    <tr style="border: none;">
+<table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
+    <tr style="margin: 0; padding: 0; border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
-            <p style="margin-bottom: auto">
+            <p style="margin: 0; padding: 0; margin-bottom: auto">
                 Splines take on several shapes and forms based on its curvature and the waypoints they interpolate. The A-Star search provides potential waypoints. But, waypoints must be selectively chosen from that set. Seen in <b>Figure 1</b>, a raw path is created from points connected by a dashed line, where a spline interpolates a subset of those points. 
             </p><br>
-            <p style="margin-bottom: auto">
+            <p style="margin: 0; padding: 0; margin-bottom: auto">
                 This becomes a balancing act. In our case, the A-Star path is the dashed line. Using fewer waypoints, the spline path  is smooth and has larger manuevers. But, it may be unclear what shape that spline takes on, and if it risks colliding with an obstacle. Conversely, using more waypoints constraints the spline onto the A-Star path that ensures it does not collide with obstacles. 
             </p>
         </td>
