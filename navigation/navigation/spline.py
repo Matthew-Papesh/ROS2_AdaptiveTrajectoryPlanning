@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import navigation.handler as handler
 import numpy as np
+from enum import Enum
 import math
 import rclpy
 
@@ -35,6 +35,9 @@ class SplinePath(Node):
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             depth=1
         )
+       
+        # optimizer modes 
+        self.optimizer_mode = self.OptMode.IDLE
 
         # class map fields 
         self.map_data = None
@@ -45,6 +48,7 @@ class SplinePath(Node):
         self.map_res = 0
         # optimizer visualization
         self.candidate_splines = np.empty((0, 4), dtype=np.float32)
+        self.dropout_splines = np.empty((0, 4), dtype=np.float32)
         self.OPTIMIZER_EPOCHS = 100
 
         # path data:
@@ -64,6 +68,13 @@ class SplinePath(Node):
         # create timer 
         self.timer = self.create_timer(0.1, self.loop)
     
+    class OptMode(Enum):
+        IDLE = 0 
+        INITIAL_TRAINING = 1 # trains for the initial set of waypoints
+        DROPOUT_TRAINING = 2 # removes unecessary waypoints with training
+        HEADING_TRAINING = 3 # trains the final waypoint heading
+        
+
     def map_callback(self, msg: OccupancyGrid):
         """
         Callback function for the obstacle map listener
@@ -107,37 +118,26 @@ class SplinePath(Node):
         to constrain the spline path to. Returns the interpolated Path of points of the constrained spline. 
         """
         self.get_logger().info("QuinticSpline.py: GetSplinePlan service request heard")
-        self.candidate_splines = np.empty((0, 4), dtype=np.float64) # reset cached splines from optimizer
+        self.candidate_splines = np.empty((0, 4), dtype=np.float32) # reset cached splines from optimizer
+        self.dropout_splines = np.empty((0, 4), dtype=np.float32)
         self.set_rviz_optimizer_splines(splines=self.candidate_splines)
 
         simple_path = request.waypoints_path
         path_x, path_y, sd_steps, cum_sd_steps = self.get_interpolated_spline(simple_path.poses)
         spline_path = handler.get_path((0, 0), 1.0, path_x, path_y)
-        self.plot_spline_gridcells(self.path_x, self.path_y, RVIZ_PLOT_SPLINE_GRIDCELLS)
+        
+        if RVIZ_PLOT_SPLINE_GRIDCELLS: # view spline
+            self.plot_spline_gridcells(self.path_x, self.path_y)
         
         response.spline_path=spline_path 
         response.sd_steps = sd_steps
         response.cumulative_sd_steps = cum_sd_steps
         return response
 
-    def plot(self, path_x: list, path_y: list, plot: bool):
-        if plot:
-            # view interpolated quintic spline plot 
-            plt.plot(path_x, path_y)
-            plt.xlabel('X-axis')
-            plt.ylabel('Y-axis')
-            plt.title('Computed Quintic Spline Path')
-            plt.xlim(self.plot_range[0][0], self.plot_range[0][1])
-            plt.ylim(self.plot_range[1][0], self.plot_range[1][1])
-            plt.axis("square")
-            plt.grid(visible=True)
-            plt.show()
-
-    def plot_spline_gridcells(self, path_x: list, path_y: list, plot: bool) :
-        if plot:
-            gridcells = handler.get_gridcells_by_list((0, 0), 1.0, path_x, path_y)
-            gridcells.header.stamp = self.get_clock().now().to_msg()
-            self.spline_gridcells_pub_.publish(gridcells)
+    def plot_spline_gridcells(self, path_x: list, path_y: list) :
+        gridcells = handler.get_gridcells_by_list((0, 0), 1.0, path_x, path_y)
+        gridcells.header.stamp = self.get_clock().now().to_msg()
+        self.spline_gridcells_pub_.publish(gridcells)
 
     def optimizer_callback(self, epoch: int, x_arr: np.ndarray, y_arr: np.ndarray): 
         """
@@ -147,14 +147,22 @@ class SplinePath(Node):
         :param y_arr [np.ndarray] The global candidate spline y points
         """
         coord_count = min(len(x_arr), len(y_arr))
-        z_arr = np.zeros(shape=coord_count, dtype=np.float32)
-    
+        z_arr = None 
+        if self.optimizer_mode != self.OptMode.DROPOUT_TRAINING:
+            z_arr = np.zeros(shape=coord_count, dtype=np.float32)
+        else:
+            lin_space = np.abs(np.linspace(-1.0, 1.0, num=coord_count, dtype=np.float32))
+            poly_space = np.power(lin_space, 2.0)
+            z_arr = 0.5*(1.0-poly_space)
+
         # normalize epochs and color code 
         norm_epoch = float(epoch) / float(self.OPTIMIZER_EPOCHS)
-        r, g, b, _ = cm.viridis(norm_epoch)
+        r, g, b, _ = cm.plasma(norm_epoch)
+        # opacity is lowered for training final heading
+        alpha = 0.3 if self.optimizer_mode != self.OptMode.HEADING_TRAINING else 1.0
         # reformat color into 32 bit format 
-        r_int, g_int, b_int = int(r*255), int(g*255), int(b*255)
-        packed_int = (r_int << 16) | (g_int << 8) | b_int
+        r_int, g_int, b_int, a_int = int(r*255), int(g*255), int(b*255), int(alpha*255)
+        packed_int = (a_int << 24) | (r_int << 16) | (g_int << 8) | b_int
         
         # convert to float32
         packed_float = np.uint32(packed_int).view(np.float32)
@@ -165,14 +173,16 @@ class SplinePath(Node):
         color_arr = np.full(coord_count, packed_float, dtype=np.float32)
         # candidate spline coordinates 
         candidate_coords = np.column_stack((x_arr, y_arr, z_arr, color_arr))
-        
-        # cache coordinates and publish to rviz
-        if self.candidate_splines.size == 0:
-            self.candidate_splines = candidate_coords
-        else:
-            self.candidate_splines = np.vstack((self.candidate_splines, candidate_coords))
-        self.set_rviz_optimizer_splines(splines=self.candidate_splines)
 
+        # cache coordinates and publish to rviz
+        if self.optimizer_mode != self.OptMode.DROPOUT_TRAINING:
+            self.candidate_splines = np.vstack((self.candidate_splines, candidate_coords))
+            self.set_rviz_optimizer_splines(splines=self.candidate_splines)
+        # cache dropout coordinates 
+        elif self.optimizer_mode == self.OptMode.DROPOUT_TRAINING and epoch==0: 
+            self.dropout_splines = np.empty((0, 4), dtype=np.float32) # create new dropout spline record
+        if self.optimizer_mode == self.OptMode.DROPOUT_TRAINING:
+            self.dropout_splines = np.vstack((self.dropout_splines, candidate_coords))
 
     def compute_spline(self, p0: PoseStamped, p1: PoseStamped) -> tuple[int, list, list, list]: 
         """
@@ -213,9 +223,7 @@ class SplinePath(Node):
         # optimize for object-avoidance with simulated annealing 
         opt_k0, opt_k1, cost = q.optimize(
             epochs=self.OPTIMIZER_EPOCHS, 
-            k0=0.0, 
-            k1=0.0, 
-            T0=50, 
+            k0=0.0, k1=0.0, T0=50, 
             step_size=0.2,
             push_sensitivity=0,
             callback_event=self.optimizer_callback
@@ -272,7 +280,7 @@ class SplinePath(Node):
         path_y = []
         sd_steps = []
 
-        def query_cost(edge: tuple[PoseStamped, PoseStamped]) -> int:
+        def query_cost(edge: tuple[PoseStamped, PoseStamped], ) -> int:
             """
             Computes and memoizes cost and path data that serves as a connecting edge between two waypoints. 
             """
@@ -294,8 +302,10 @@ class SplinePath(Node):
 
         self.get_logger().info(f"\n\033[1mCreating Splines Between Waypoints...\033[1m\n")
         # circular map end-start waypoints 
-        next_pt_map[ptid(waypoints[-1])] = waypoints[0]
-        # memoize spline before dropout 
+        next_pt_map[ptid(waypoints[-1])] = waypoints[0] 
+        
+        # memoize spline before dropout; assign opt mode
+        self.optimizer_mode = self.OptMode.INITIAL_TRAINING
         for spline_index in range(1, len(waypoints)):
             p0 = waypoints[spline_index - 1]
             p1 = waypoints[spline_index]
@@ -305,6 +315,7 @@ class SplinePath(Node):
         
         self.get_logger().info(f"\n\033[1mSimplifying with Waypoint Dropout...\033[1m\n")
         # handle waypoint dropout
+        self.optimizer_mode = self.OptMode.DROPOUT_TRAINING
         curr_pt = waypoints[0]
         while dropout_cnt < max_dropout:
             # retrieve the next two waypoints 
@@ -318,7 +329,10 @@ class SplinePath(Node):
             # retrieve costs 
             root_cost_0 = query_cost((curr_pt, next_pt))
             root_cost_1 = query_cost((next_pt, next_next_pt))
+            # retrieve new dropout cost
+            self.optimizer_mode = self.OptMode.DROPOUT_TRAINING
             dropout_cost = query_cost((curr_pt, next_next_pt))
+            self.optimizer_mode = self.OptMode.INITIAL_TRAINING
 
             # handle new potential dropout 
             sum = root_cost_0 + root_cost_1
@@ -327,6 +341,9 @@ class SplinePath(Node):
                 next_pt_map[ptid(next_pt)] = None # pruned
                 next_pt_map[ptid(curr_pt)] = next_next_pt # re-map waypoints 
                 dropout_cnt += 1
+                # view new spline path
+                self.candidate_splines = np.vstack((self.candidate_splines, self.dropout_splines))
+                self.set_rviz_optimizer_splines(splines=self.candidate_splines)
 
             # at end of waypoints; reset
             if next_next_pt == waypoints[-1]:
@@ -340,6 +357,7 @@ class SplinePath(Node):
         self.get_logger().info(f"\n\033[1mDropout dropped {dropout_cnt} Waypoints.\033[1m\n")
         self.get_logger().info(f"\n\033[1mReconstructing Final Path...\033[1m\n")
         # reconstruct final path 
+        self.optimizer_mode = self.OptMode.HEADING_TRAINING
         curr_pt = waypoints[0]
         build_path = True
         while build_path:
@@ -408,6 +426,7 @@ class SplinePath(Node):
         self.sd_steps = sd_steps
         self.cumulative_sd_steps = np.cumsum(sd_steps).tolist()
         self.get_logger().info(f"\n\033[1mFinal Path Compelete. Returning Results...\033[1m")
+        self.optimizer_mode = self.OptMode.IDLE # update opt mode
         return (path_x, path_y, sd_steps, self.cumulative_sd_steps)
 
     def set_rviz_optimizer_splines(self, splines: np.ndarray):
@@ -429,7 +448,7 @@ class SplinePath(Node):
             PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1), 
             PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
             PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1),
-            PointField(name="rgb", offset=12, datatype=PointField.UINT32, count=1)
+            PointField(name="rgba", offset=12, datatype=PointField.UINT32, count=1)
         ]
         # pass cached candidates and publish
         msg.data = self.candidate_splines.tobytes()
@@ -437,11 +456,8 @@ class SplinePath(Node):
 
     def loop(self):
         ''' Main node loop. '''
-        if self.path_x is not None and self.path_y is not None:
-            self.plot_spline_gridcells(self.path_x, self.path_y, RVIZ_PLOT_SPLINE_GRIDCELLS)
-            self.plot(self.path_x, self.path_y, MATPLOTLIB_PLOT_QUINTIC)
-            self.path_x = None
-            self.path_y = None
+        if self.path_x is not None and self.path_y is not None and RVIZ_PLOT_SPLINE_GRIDCELLS:
+            self.plot_spline_gridcells(self.path_x, self.path_y)
 
 def main(args=None):
     rclpy.init()
