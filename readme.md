@@ -68,6 +68,26 @@ This serves as an excellent feed-forward controller for both, finding base wheel
 ### 3.2 PID Feedback with Stanley Controller
 The second half of motion control is the feedback loop. 
 
+<table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p style="margin: 0; padding: 0; margin-bottom: 1rem">
+                d1
+            </p>
+            <p style="margin: 0; padding: 0; margin-bottom: auto">
+                d2
+            </p>
+        </td>
+        <td width="4%" style="border: none;"></td>
+        <td width="48%" style="margin: 0; padding: 0; border: none;">
+            <p align="center">
+                <img src="figures/fig_3.png" alt="B-Spline Path Smoothing" width="100%">
+                <figcaption><b>Figure 3:</b> <i>Illustrates spline path planning. <a href="https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219">[3]</a></i></figcaption>
+            </p>
+        </td>
+    </tr>
+</table>
+
 ## 4.0 Adaptive Splines 
 
 ### 4.1 Cost-Optimization Problem 
@@ -91,3 +111,6 @@ The second half of motion control is the feedback loop.
 
 [[2]](https://www.desmos.com/calculator/e7bd339d19) Papesh, M. (2026, June 12). Quintic spline demonstration. Desmos.com; Desmos. [https://www.desmos.com/calculator/e7bd339d19](https://www.desmos.com/calculator/e7bd339d19)
 
+[[3]](https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219) Kundu, S. (2020, July 19). Understanding Geometric Path Tracking Algorithms — Stanley Controller. Roboquest. [https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219](https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219)
+
+‌
