@@ -53,9 +53,9 @@ Once provided the spline path to follow, the navigation node (`nav_node`) comput
         </td>
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
-            <p style="margin: 0; padding: 0; margin-bottom: auto">
+            <p style="margin: 0; padding: 0; margin-bottom: 1rem">
                 As seen in <b>Figure 2</b>, a continuous and arced path can be approximated as circular motion by calculating the instantaneous center of curvature (ICC). The robot can look ahead and behind its current position to approximate its local circular curvature. 
-            </p><br>
+            </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
                 The instantaneous angular velocity is then calculated from both, the ICC and the motion profiled linear speed. This leaves a discretized vector of linear and angular speeds to describe instantaneous velocity along each point of the path. 
             </p><br>
