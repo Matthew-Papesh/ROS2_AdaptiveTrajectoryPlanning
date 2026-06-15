@@ -75,7 +75,7 @@ The second half of motion control is the feedback loop. Our robot uses a lateral
                 As seen in <b>Figure 3</b>, positional and heading errors are used to calculate speed adjustments at position <code>(cx,cy)</code> along the path. Position <code>(cx,cy)</code> is the point along the path closest to the robot.  
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                Although our robot used a PID controller, our error was modeled similarly to Stanley. Our robot tracked the closest unvisited point along the path to the robot based on the <code>/odom</code> topic. This point was placed in the robot's reference frame to measure the perpendicular [lateral] offset between it and the robot. This metric was an error for the PID controller that outputs a differential angular speed. 
+                Although our robot used a PID controller, our error was modeled similarly to Stanley. Our robot tracked its closest unvisited point along the path based on the <code>/odom</code> topic. This point was placed in the robot's reference frame to measure the perpendicular [lateral] offset between it and the robot. This metric was an error for the PID controller that outputs a differential angular speed. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
