@@ -101,7 +101,7 @@ Each path is made up of parametric quintic polynomials based on an input **t** w
     <figcaption style="padding-left: 25%"><b>Equation 1:</b> <i>Models quintic spline S(t).</i></figcaption>
 </p>
 
-Both functions' coefficients are solved for with a time-parameter matrix, where **S(t) = (x(t), y(t))**. Spline **S(t)**, and its first and second derivative, are computed via Horner's method. This is implemented in the `Quintic` class in `quintic.py`. Finally, our robot computes splines relatively between poses. 
+Both functions' coefficients are solved for with a time-parameter matrix Boundary Value Problem. The result is a spline **S(t) = (x(t), y(t))**, and its first and second derivative; computed via Horner's method. This is implemented in the `Quintic` class in `quintic.py`. Finally, our robot computes splines relatively between poses. 
 
 ### 4.2 Cost-Optimization Problem 
 The spline exploration-to-safety bottleneck mentioned before is an optimization problem. Obstacle avoidance can be quantified in a cost metric in terms of spline parameters. These parameters then can be tuned by descending the cost map. 
