@@ -38,10 +38,10 @@ The spline path also follows the same homotopy as the original path. Viewing <b>
 But giving splines the ability to explore different homotopies from the original path brings back the bottleneck of exploring at the expense of safety; this is especially true in environments that can change. **Therefore, adaptive spline planning that avoids obstacles could reconcile exploration beyond A\* with safety.**
 
 ## 3.0 Motion Controls 
-Trajectory planning involves (1) path planning and (2) motion planning. This section will briefly cover the motion planning. Motion planning is based on robot odometry and the interpolated spline path it follows. 
+Trajectory planning involves (1) path planning and (2) motion planning. This section will briefly cover the motion planning. Motion planning is based on robot odometry and the spline path it follows. 
 
 ### 3.1 Motion Profiling with ICC
-Once the spline path to follow is provided, the navigation node (`nav_node`) computes linear speeds. Linear speed is determined by acceleration and maximum-speed constraints. The linear speeds are calculated at each point along the discretized spline path by applying a trapezoidal motion profile. 
+Given a path, the navigation node (`nav_node`) computes linear speeds. Linear speed is determined by acceleration and maximum-speed constraints. The linear speeds are calculated at each point along the discretized path by applying a trapezoidal motion profile. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -54,7 +54,7 @@ Once the spline path to follow is provided, the navigation node (`nav_node`) com
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                As seen in <b>Figure 2</b>, a continuous and arced path can be approximated as circular motion by calculating the instantaneous center of curvature (ICC). The robot can look ahead and behind its current position to approximate the local curvature of the circle. 
+                As seen in <b>Figure 2</b>, a path is approximated as circular motion with the instantaneous center of curvature (ICC). The robot looks ahead and behind its current position to approximate the local curvature of the circle. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
                 The instantaneous angular velocity is then calculated from both the ICC and the motion-profiled linear speed. This leaves a discretized vector of linear and angular speeds to describe instantaneous velocity along each point of the path. 
@@ -66,7 +66,7 @@ Once the spline path to follow is provided, the navigation node (`nav_node`) com
 This serves as an excellent feed-forward controller for both finding base wheel speeds and base linear/angular speeds for publishing to the `/cmd_vel` topic. 
 
 ### 3.2 Lateral PID Feedback Controller
-The second half of motion control is the feedback loop. Our robot uses a lateral PID controller that calculates error similarly to a Stanley controller. 
+The second half of motion is the feedback loop. Our robot uses a lateral PID controller that calculates error similarly to a Stanley controller. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -75,7 +75,7 @@ The second half of motion control is the feedback loop. Our robot uses a lateral
                 As seen in <b>Figure 3</b>, positional and heading errors are used to calculate speed adjustments at position <code>(cx,cy)</code> along the path. Position <code>(cx,cy)</code> is the point along the path closest to the robot.  
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                Although our robot used a PID controller, our error was modeled similarly to Stanley. Our robot tracked its closest unvisited point along the path based on the <code>/odom</code> topic. This point was placed in the robot's reference frame to measure the perpendicular [lateral] offset between it and the robot. This metric was an error for the PID controller that outputs a differential angular speed. 
+                Although our robot used a PID controller, the error was modeled similarly to Stanley. Our robot tracked its closest unvisited point along the path based on the <code>/odom</code> topic. This point was placed in the robot's reference frame to measure the perpendicular [lateral] offset between it and the robot. This metric was an error for the PID controller that outputs a differential angular speed. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
@@ -90,10 +90,20 @@ The second half of motion control is the feedback loop. Our robot uses a lateral
 
 Then, the motion profile computes wheel speeds for each point along the path before caching them. The closest unvisited point along the path both dictates what base speed is pulled from the cache in addition to the differential speed offset for drift correction. Together, the robot successfully followed spline paths.
 
+## 4.0 Intelligent and Adaptive Splines 
+The remainder of this document covers the custom approach to adaptive spline planning. This section covers how splines can act as intelligent agents that adapt to avoid obstacles in the environment. **This is the central contribution of this project**. All work is implemented with Numpy. 
 
-## 4.0 Adaptive Splines 
+### 4.1 Quintic Splines  
+Each path is made up of parametric quintic polynomials based on an input **t** with domain of [0,1]. This function maps **t** → **(x,y)**. A path is a set of poses **(x,y,θ)**. A single spline interpolates between one pose to the next. If spline **S** interpolates from pose **P** to pose **P`**, then functions **x(t)** and **y(t)** take the form: 
 
-### 4.1 Cost-Optimization Problem 
+<p align="center">
+    <img src="equations/eq_1_quintic.png" style="width: 40%">
+    <figcaption style="text-align: center;"><b>Equation 1:</b> <i>Models quintic spline S(t).</i></figcaption>
+</p>
+
+Both functions' coefficients are solved for with a time-parameter matrix, where **S(t) = (x(t), y(t))**. Spline **S(t)**, and its first and second derivative, are computed via Horner's method. This is implemented in the `Quintic` class in `quintic.py`. Finally, our robot computes splines relatively between poses. 
+
+### 4.2 Cost-Optimization Problem 
 ### 4.2 Optimizing Splines with Simulated Annealing 
 ### 4.3 Initial Tests 
 
