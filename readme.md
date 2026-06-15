@@ -104,10 +104,33 @@ Each path is made up of parametric quintic polynomials based on an input **t** w
 Both functions' coefficients are solved for with a time-parameter matrix, where **S(t) = (x(t), y(t))**. Spline **S(t)**, and its first and second derivative, are computed via Horner's method. This is implemented in the `Quintic` class in `quintic.py`. Finally, our robot computes splines relatively between poses. 
 
 ### 4.2 Cost-Optimization Problem 
+The spline exploration-to-safety bottleneck mentioned before is an optimization problem. Obstacle avoidance can be quantified in a cost metric in terms of spline parameters. These parameters then can be tuned by descending the cost map. 
+
+Solving for quintic spline coefficients requires knowing variables: **x0, y0, θ0, x1, y1, θ1, k0,** and **k1**. The first six are provided by the two poses the spline interpolates. The **k0** and **k1** are independent curvature constants to be set separately. **k0 and k1 are denoted as the 2D k-space**.  
+
+<table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p align="center">
+                <img src="figures/fig_4_kspace_anim.gif" alt="Arc discretization motion tracking" width="100%">
+                <figcaption><b>Figure 4:</b> <i>Illustrates a spline traversing the k-space. [A custom Desmos demonstration] <a href="https://www.desmos.com/calculator/hlemwknsxi">[4] </a></figcaption>
+            </p>
+        </td>
+        <td width="4%" style="border: none;"></td>
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p style="margin: 0; padding: 0; margin-bottom: 1rem">
+                As seen in <b>Figure 4</b>, a spline is shown changing its curvature and shape based on the values for <b>(k0, k1)</b>. A subset of this k-space has the spline go over the blue circular obstacle, and another subset goes under the obstacle. 
+            </p>
+            <p style="margin: 0; padding: 0; margin-bottom: auto">
+                Our robot quantifies cost as overlap with known obstacles. This cost is minimized for obstacle avoidance. 
+            </p><br>
+        </td>
+    </tr>
+</table>
 
 
-### 4.2 Optimizing Splines with Simulated Annealing 
-### 4.3 Initial Tests 
+### 4.3 Optimizing Splines with Simulated Annealing 
+### 4.4 Initial Tests 
 
 ## 5.0 Trajectory Planning Package Pipeline
 
@@ -129,3 +152,4 @@ Both functions' coefficients are solved for with a time-parameter matrix, where 
 [[3]](https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219) Kundu, S. (2020, July 19). Understanding Geometric Path Tracking Algorithms — Stanley Controller. Roboquest. [https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219](https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219)
 
 ‌
+[[4]](https://www.desmos.com/calculator/hlemwknsxi) Papesh, M. (2026, June 15). Spline k-space demonstration. Desmos.com; Desmos. [https://www.desmos.com/calculator/hlemwknsxi](https://www.desmos.com/calculator/hlemwknsxi)  
