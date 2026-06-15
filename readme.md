@@ -41,7 +41,7 @@ But giving splines the ability to explore different homotopies from the original
 Trajectory planning involves (1) path planning and (2) motion planning. This section will briefly cover the motion planning. Motion planning is based on robot odometry and the interpolated spline path it follows. 
 
 ### 3.1 Motion Profiling with ICC
-Once the spline path to follow is provided, the navigation node (`nav_node`) computes linear speeds. Linear speed is determined based on acceleration and maximum speed constraints. The linear speeds are calculated at each point along the discretized spline path by applying a trapezoidal motion profile. 
+Once the spline path to follow is provided, the navigation node (`nav_node`) computes linear speeds. Linear speed is determined by acceleration and maximum-speed constraints. The linear speeds are calculated at each point along the discretized spline path by applying a trapezoidal motion profile. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -54,7 +54,7 @@ Once the spline path to follow is provided, the navigation node (`nav_node`) com
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                As seen in <b>Figure 2</b>, a continuous and arced path can be approximated as circular motion by calculating the instantaneous center of curvature (ICC). The robot can look ahead and behind its current position to approximate its local circular curvature. 
+                As seen in <b>Figure 2</b>, a continuous and arced path can be approximated as circular motion by calculating the instantaneous center of curvature (ICC). The robot can look ahead and behind its current position to approximate the local curvature of the circle. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
                 The instantaneous angular velocity is then calculated from both the ICC and the motion-profiled linear speed. This leaves a discretized vector of linear and angular speeds to describe instantaneous velocity along each point of the path. 
@@ -75,7 +75,7 @@ The second half of motion control is the feedback loop. Our robot uses a lateral
                 As seen in <b>Figure 3</b>, positional and heading errors are used to calculate speed adjustments at position <code>(cx,cy)</code> along the path. Position <code>(cx,cy)</code> is the point along the path closest to the robot.  
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                However, our robot used a PID controller, but the error was modeled similarly to Finley. Our robot tracked the closest unvisited point along the path to the robot based on the <code>/odom</code> topic. This point was placed in the robot's reference frame to measure the perpendicular [lateral] offset between it and the robot. This metric was an error for the PID controller that outputs a differential angular speed. 
+                Although our robot used a PID controller, our error was modeled similarly to Stanley. Our robot tracked the closest unvisited point along the path to the robot based on the <code>/odom</code> topic. This point was placed in the robot's reference frame to measure the perpendicular [lateral] offset between it and the robot. This metric was an error for the PID controller that outputs a differential angular speed. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
@@ -88,7 +88,7 @@ The second half of motion control is the feedback loop. Our robot uses a lateral
     </tr>
 </table>
 
-Then, the motion profile computes wheel speeds for each point along the path before caching them. The closest unvisited point along the path both dictates what base speed is pulled from the cache in addition to differential speed offset for drift correction. Together, the robot successfully followed spline paths.
+Then, the motion profile computes wheel speeds for each point along the path before caching them. The closest unvisited point along the path both dictates what base speed is pulled from the cache in addition to the differential speed offset for drift correction. Together, the robot successfully followed spline paths.
 
 
 ## 4.0 Adaptive Splines 
