@@ -97,13 +97,15 @@ The remainder of this document covers the custom approach to adaptive spline pla
 Each path is made up of parametric quintic polynomials based on an input **t** with domain of [0,1]. This function maps **t** → **(x,y)**. A path is a set of poses **(x,y,θ)**. A single spline interpolates between one pose to the next. If spline **S** interpolates from pose **P** to pose **P`**, then functions **x(t)** and **y(t)** take the form: 
 
 <p align="center">
-    <img src="equations/eq_1_quintic.png" style="width: 50%">
+    <img src="equations/eq_1_quintic.png" style="width: 60%">
     <figcaption style="padding-left: 25%"><b>Equation 1:</b> <i>Models quintic spline S(t).</i></figcaption>
 </p>
 
 Both functions' coefficients are solved for with a time-parameter matrix, where **S(t) = (x(t), y(t))**. Spline **S(t)**, and its first and second derivative, are computed via Horner's method. This is implemented in the `Quintic` class in `quintic.py`. Finally, our robot computes splines relatively between poses. 
 
 ### 4.2 Cost-Optimization Problem 
+
+
 ### 4.2 Optimizing Splines with Simulated Annealing 
 ### 4.3 Initial Tests 
 
