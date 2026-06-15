@@ -97,13 +97,13 @@ The remainder of this document covers the custom approach to adaptive spline pla
 Each path is made up of parametric quintic polynomials based on an input **t** with domain of [0,1]. This function maps **t** → **(x,y)**. A path is a set of poses **(x,y,θ)**. A single spline interpolates between one pose to the next. If spline **S** interpolates from pose **P** to pose **P`**, then functions **x(t)** and **y(t)** take the form: 
 
 <p align="center">
-    <img src="equations/eq_1_quintic.png" style="width: 60%">
-    <figcaption style="padding-left: 25%"><b>Equation 1:</b> <i>Models quintic spline S(t).</i></figcaption>
+    <img src="equations/eq_1_quintic.png" style="width: 50%">
+    <figcaption style="text-align: center;"><b>Equation 1:</b> <i>Models quintic spline S(t).</i></figcaption>
 </p>
 
-Both functions' coefficients are solved for with a time-parameter matrix Boundary Value Problem. The result is a spline **S(t) = (x(t), y(t))**, and its first and second derivative; computed via Horner's method. This is implemented in the `Quintic` class in `quintic.py`. Finally, our robot computes splines relatively between poses. 
+Both functions' coefficients are solved for with a time-parameter matrix as the Boundary Value Problem. The result is a spline **S(t) = (x(t), y(t))**, and its first and second derivative; computed via Horner's method. This is implemented in the `Quintic` class in `quintic.py`. Finally, our robot computes splines relatively between poses. 
 
-### 4.2 Cost-Optimization Problem 
+### 4.2 Cost-Optimization Problem and the K-Space
 The spline exploration-to-safety bottleneck mentioned before is an optimization problem. Obstacle avoidance can be quantified in a cost metric in terms of spline parameters. These parameters then can be tuned by descending the cost map. 
 
 Solving for quintic spline coefficients requires knowing variables: **x0, y0, θ0, x1, y1, θ1, k0,** and **k1**. The first six are provided by the two poses the spline interpolates. The **k0** and **k1** are independent curvature constants to be set separately. **k0 and k1 are denoted as the 2D k-space**.  
@@ -123,14 +123,46 @@ Solving for quintic spline coefficients requires knowing variables: **x0, y0, θ
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
                 Our robot quantifies cost as overlap with known obstacles. This cost is minimized for obstacle avoidance. 
-            </p><br>
+            </p>
         </td>
     </tr>
 </table>
 
+### 4.3 Defining the Cost Function
+A spline can be adaptive by avoiding obstacles in its environment. This requires quantifying spline overlap with a set of obstacles. Potential solutions for a spline are candidate splines with an optimal **(k0,k1)**. However, optimal splines must also minimize acceleration and travel distance to ensure safe and controlled motion when driving. 
 
-### 4.3 Optimizing Splines with Simulated Annealing 
-### 4.4 Initial Tests 
+<p align="center">
+    <img src="equations/eq_2_cost_function.png" style="width: 80%; height: 3rem">
+    <figcaption style="text-align: center;"><b>Equation 2:</b> <i>Models the cost function J(S) for spline optimization.</i></figcaption>
+</p>
+
+The cost function in **Equation 2** is a linear combination of sub-costs for arc length, acceleration, and obstacle overlap. Each sub-cost term **f(S)** is tuned by a corresponding scaler. Each sub-cost term **f(S)** returns a **Nx1** vector of costs calculated at each **N** points interpolated along the spline. The sub-cost linear combination is summed and transforms against ones row vector with shape **1xN**.
+
+This results is a linear combination of the sub-cost functions **f(S)** that evaluates cost at every point along the spline. The rows of cost are then summed as a final cost for **J(S)**.
+
+<table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p style="margin: 0; padding: 0; margin-bottom: 1rem">
+                d1
+            </p>
+            <p style="margin: 0; padding: 0; margin-bottom: auto">
+                d2
+            </p>
+        </td>
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p align="center">
+                <img src="equations/eq_3_cost_function_cont.png" alt="Arc discretization motion tracking" width="100%">
+                <figcaption><b>Equation 3:</b> <i>Models .</figcaption>
+            </p>
+        </td>
+        <td width="4%" style="border: none;"></td>
+    </tr>
+</table>
+
+
+### 4.4 Optimizing Splines with Simulated Annealing 
+### 4.5 Initial Tests 
 
 ## 5.0 Trajectory Planning Package Pipeline
 
