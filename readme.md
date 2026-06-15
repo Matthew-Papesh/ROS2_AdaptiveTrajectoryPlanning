@@ -40,8 +40,8 @@ But giving splines the ability to explore different homotopies from the original
 ## 3.0 Motion Controls 
 Trajectory planning involves (1) path planning and (2) motion planning. This section will briefly cover the motion planning. Motion planning is based on robot odometry and the interpolated spline path it follows. 
 
-### 3.1 Trapezoidal Motion Profile 
-Once provided the spline path to follow, the navigation node (`nav_node`) computes linear speeds. Speed is calculated at each point along the discretized spline path. Linear speed is determined based on acceleration and maximum speed constraints. 
+### 3.1 Motion Profiling with ICC
+Once provided the spline path to follow, the navigation node (`nav_node`) computes linear speeds. Linear speed is determined based on acceleration and maximum speed constraints. The linear speeds are calculated at each point along the discretized spline path by applying a trapezoidal motion profile. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -54,10 +54,10 @@ Once provided the spline path to follow, the navigation node (`nav_node`) comput
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                As seen in <b>Figure 2</b>, a continuous and arced path can be approximated as circular motion by calculating the instantaneous center of curvature (ICC). Given the spline path, the robot can look ahead and behind its current position to approximate its local circular curvature. 
+                As seen in <b>Figure 2</b>, a continuous and arced path can be approximated as circular motion by calculating the instantaneous center of curvature (ICC). The robot can look ahead and behind its current position to approximate its local circular curvature. 
             </p><br>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                With this curvature, the instantaneous angular velocity is calculated from both, the ICC and the motion profiled linear speed. This leaves a discretized vector of linear and angular speeds to describe instantaneous velocity along each point of the path. 
+                The instantaneous angular velocity is then calculated from both, the ICC and the motion profiled linear speed. This leaves a discretized vector of linear and angular speeds to describe instantaneous velocity along each point of the path. 
             </p><br>
         </td>
     </tr>
