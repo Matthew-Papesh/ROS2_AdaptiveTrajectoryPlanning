@@ -65,28 +65,31 @@ Once provided the spline path to follow, the navigation node (`nav_node`) comput
 
 This serves as an excellent feed-forward controller for both, finding base wheel speeds, and base linear/angular speeds for publishing to the `/cmd_vel` topic. 
 
-### 3.2 PID Feedback with Stanley Controller
-The second half of motion control is the feedback loop. 
+### 3.2 Lateral PID Feedback Controller
+The second half of motion control is the feedback loop. Our robot uses a lateral PID controller that calculates error similarly to a Stanley controller. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                d1
+                As seen in <b>Figure 3</b>, positional and heading error are used to calculate speed adjustments at position <code>(cx,cy)</code> along the path. Position <code>(cx,cy)</code> is the point along the path closest to the robot.  
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                d2
+                However, our robot used a PID controller, but error was modeled similarly to Finley. Our robot tracked the closest unvisited point along the path to the robot based on the <code>/odom</code> topic. This point was placed in the robot's reference frame to measure the perpendicular [lateral] offset between it and the robot. This metric was error for the PID controller that output a differential angular speed. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
         <td width="48%" style="margin: 0; padding: 0; border: none;">
             <p align="center">
-                <img src="figures/fig_3.png" alt="B-Spline Path Smoothing" width="100%">
-                <figcaption><b>Figure 3:</b> <i>Illustrates spline path planning. <a href="https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219">[3]</a></i></figcaption>
+                <img src="figures/fig_3.png" alt="Stanley Controller" width="100%">
+                <figcaption><b>Figure 3:</b> <i>Illustrates error calculation for a Stanley Feedback Controller. <a href="https://medium.com/roboquest/understanding-geometric-path-tracking-algorithms-stanley-controller-25da17bcc219">[3]</a></i></figcaption>
             </p>
         </td>
     </tr>
 </table>
+
+Then, the motion profile computes wheel speeds for each point along the path before caching them. The closest unvisited point along the path both dictates what base speed pulled from the cache in addition to differential speed offset for drift correction. Together, the robot successfully followed spline paths.
+
 
 ## 4.0 Adaptive Splines 
 
