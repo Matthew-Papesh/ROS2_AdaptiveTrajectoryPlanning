@@ -54,14 +54,16 @@ Once provided the spline path to follow, the navigation node (`nav_node`) comput
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                d1
+                As seen in <b>Figure 2</b>, a continuous and arced path can be approximated as circular motion by calculating the instantaneous center of curvature (ICC). Given the spline path, the robot can look ahead and behind its current position to approximate its local circular curvature. 
             </p><br>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                d2
-            </p>
+                With this curvature, the instantaneous angular velocity is calculated from both, the ICC and the motion profiled linear speed. This leaves a discretized vector of linear and angular speeds to describe instantaneous velocity along each point of the path. 
+            </p><br>
         </td>
     </tr>
 </table>
+
+This serves as an excellent feed-forward controller for both, finding base wheel speeds, and base linear/angular speeds for publishing to the `/cmd_vel` topic. 
 
 ### 3.2 PID Feedback with Stanley Controller
 
