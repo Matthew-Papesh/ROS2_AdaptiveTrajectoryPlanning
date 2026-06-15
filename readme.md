@@ -13,9 +13,9 @@ Our robot creates paths to follow from quintic spline polynomials. Splines creat
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
-            <p style="margin: 0; padding: 0; margin-bottom: auto">
+            <p style="margin: 0; padding: 0; margin-bottom: 1rem">
                 Splines take on several shapes and forms based on their curvature and the waypoints they interpolate. The A* search provides potential waypoints. But waypoints must be selectively chosen. As seen in <b>Figure 1</b>, a raw path is created from points connected by a dashed line, where the spline interpolates a subset of those points. 
-            </p><br>
+            </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
                 This becomes a balancing act. In our case, the A* path is the dashed line. Fewer waypoints means the spline path is smoother and can have larger maneuvers. But, it may be unclear what shape that spline takes on, and if it risks colliding with an obstacle. Conversely, using more waypoints constrains the spline onto the A* path that will ensure it does not collide with obstacles. 
             </p>
@@ -48,7 +48,7 @@ Once provided the spline path to follow, the navigation node (`nav_node`) comput
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p align="center">
                 <img src="figures/fig_2.gif" alt="Arc discretization motion tracking" width="100%">
-                <figcaption><b>Figure 2:</b> <i>Illustrates approximating angular motion from spline path. [A custom demonstration]</figcaption>
+                <figcaption><b>Figure 2:</b> <i>Illustrates approximating angular motion from spline path. [A custom Desmos demonstration] <a href="https://www.desmos.com/calculator/e7bd339d19">[2] </a></figcaption>
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
@@ -66,6 +66,7 @@ Once provided the spline path to follow, the navigation node (`nav_node`) comput
 This serves as an excellent feed-forward controller for both, finding base wheel speeds, and base linear/angular speeds for publishing to the `/cmd_vel` topic. 
 
 ### 3.2 PID Feedback with Stanley Controller
+The second half of motion control is the feedback loop. 
 
 ## 4.0 Adaptive Splines 
 
@@ -88,4 +89,5 @@ This serves as an excellent feed-forward controller for both, finding base wheel
 ## 8.0 References 
 [[1]](https://doi.org/10.3390/machines13080710) Sun, Z., Luo, Q., Zhang, Z., Peng, Y., Liu, Q., Zheng, S., & Liu, J. (2025). An Integrated Path Planning and Tracking Framework Based on Adaptive Heuristic JPS and B-Spline Optimization. Machines, 13(8), 710. [https://doi.org/10.3390/machines13080710](https://doi.org/10.3390/machines13080710)
 
+[[2]](https://www.desmos.com/calculator/e7bd339d19) Papesh, M. (2026, June 12). Quintic spline demonstration. Desmos.com; Desmos. [https://www.desmos.com/calculator/e7bd339d19](https://www.desmos.com/calculator/e7bd339d19)
 
