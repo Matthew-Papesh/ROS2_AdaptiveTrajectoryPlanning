@@ -41,7 +41,27 @@ But giving splines the ability to explore different homotopies from the original
 Trajectory planning involves (1) path planning and (2) motion planning. This section will briefly cover the motion planning. Motion planning is based on robot odometry and the interpolated spline path it follows. 
 
 ### 3.1 Trapezoidal Motion Profile 
+Once provided the spline path to follow, the navigation node (`nav_node`) computes linear speeds. Speed is calculated at each point along the discretized spline path. Linear speed is determined based on acceleration and maximum speed constraints. 
 
+<table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p align="center">
+                <img src="figures/fig_2.gif" alt="Arc discretization motion tracking" width="100%">
+                <figcaption><b>Figure 2:</b> <i>Illustrates approximating angular motion from spline path. [A custom demonstration]</figcaption>
+            </p>
+        </td>
+        <td width="4%" style="border: none;"></td>
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p style="margin: 0; padding: 0; margin-bottom: auto">
+                d1
+            </p><br>
+            <p style="margin: 0; padding: 0; margin-bottom: auto">
+                d2
+            </p>
+        </td>
+    </tr>
+</table>
 
 ### 3.2 PID Feedback with Stanley Controller
 
