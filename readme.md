@@ -33,7 +33,7 @@ Our robot creates paths to follow from quintic spline polynomials. Splines creat
 ### 2.2 Exploration-Exploitation Bottleneck on Splines and Safety 
 If too many waypoints are chosen from the A* path, then A* will have more influence over the path geometry than the curvature of the splines created. The balancing act from before becomes a trajectory bottleneck. The curvature and geometric malleability of splines is minimized when the number of waypoints and safety are maximized. <b>Figure 1</b> shows this trade-off, in which every other waypoint is rejected. 
  
-The spline path also follows the same homotopy as the original path. Viewing <b>Figure 1</b> from left to right, both the original and spline path travel over the first obstacle and weave under the second, and over the third in the same topological way. Although this allows for deterministic path planning, there are benefits to differing spline homotopy from the original path. For instance, consider if the spline in <b>Figure 1</b> could not pass through point `kp2`, and the spline instead traveled over atop the second obstacle from point `kp1` to `kp3`. **A spline path like that may turn out to be shorter or smoother.** 
+The spline path also follows the same homotopy as the original path. Viewing <b>Figure 1</b> from left to right, both the original and spline path travel over the first obstacle and weave under the second, and over the third in the same topological way. Although this allows for deterministic path planning, there are benefits to differing spline homotopy from the original path. For instance, consider if the spline in <b>Figure 1</b> could not pass through point `kp2`, and the spline instead traveled over (atop) the second obstacle from point `kp1` to `kp3`. **A spline path like that may turn out to be shorter or smoother.** 
 
 But giving splines the ability to explore different homotopies from the original path brings back the bottleneck of exploring at the expense of safety; this is especially true in environments that can change. **Therefore, adaptive spline planning that avoids obstacles could reconcile exploration beyond A\* with safety.**
 
@@ -41,7 +41,7 @@ But giving splines the ability to explore different homotopies from the original
 Trajectory planning involves (1) path planning and (2) motion planning. This section will briefly cover the motion planning. Motion planning is based on robot odometry and the interpolated spline path it follows. 
 
 ### 3.1 Motion Profiling with ICC
-Once provided the spline path to follow, the navigation node (`nav_node`) computes linear speeds. Linear speed is determined based on acceleration and maximum speed constraints. The linear speeds are calculated at each point along the discretized spline path by applying a trapezoidal motion profile. 
+Once the spline path to follow is provided, the navigation node (`nav_node`) computes linear speeds. Linear speed is determined based on acceleration and maximum speed constraints. The linear speeds are calculated at each point along the discretized spline path by applying a trapezoidal motion profile. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -57,13 +57,13 @@ Once provided the spline path to follow, the navigation node (`nav_node`) comput
                 As seen in <b>Figure 2</b>, a continuous and arced path can be approximated as circular motion by calculating the instantaneous center of curvature (ICC). The robot can look ahead and behind its current position to approximate its local circular curvature. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                The instantaneous angular velocity is then calculated from both, the ICC and the motion profiled linear speed. This leaves a discretized vector of linear and angular speeds to describe instantaneous velocity along each point of the path. 
+                The instantaneous angular velocity is then calculated from both the ICC and the motion-profiled linear speed. This leaves a discretized vector of linear and angular speeds to describe instantaneous velocity along each point of the path. 
             </p><br>
         </td>
     </tr>
 </table>
 
-This serves as an excellent feed-forward controller for both, finding base wheel speeds, and base linear/angular speeds for publishing to the `/cmd_vel` topic. 
+This serves as an excellent feed-forward controller for both finding base wheel speeds and base linear/angular speeds for publishing to the `/cmd_vel` topic. 
 
 ### 3.2 Lateral PID Feedback Controller
 The second half of motion control is the feedback loop. Our robot uses a lateral PID controller that calculates error similarly to a Stanley controller. 
@@ -72,10 +72,10 @@ The second half of motion control is the feedback loop. Our robot uses a lateral
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                As seen in <b>Figure 3</b>, positional and heading error are used to calculate speed adjustments at position <code>(cx,cy)</code> along the path. Position <code>(cx,cy)</code> is the point along the path closest to the robot.  
+                As seen in <b>Figure 3</b>, positional and heading errors are used to calculate speed adjustments at position <code>(cx,cy)</code> along the path. Position <code>(cx,cy)</code> is the point along the path closest to the robot.  
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                However, our robot used a PID controller, but error was modeled similarly to Finley. Our robot tracked the closest unvisited point along the path to the robot based on the <code>/odom</code> topic. This point was placed in the robot's reference frame to measure the perpendicular [lateral] offset between it and the robot. This metric was error for the PID controller that output a differential angular speed. 
+                However, our robot used a PID controller, but the error was modeled similarly to Finley. Our robot tracked the closest unvisited point along the path to the robot based on the <code>/odom</code> topic. This point was placed in the robot's reference frame to measure the perpendicular [lateral] offset between it and the robot. This metric was an error for the PID controller that outputs a differential angular speed. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
@@ -88,7 +88,7 @@ The second half of motion control is the feedback loop. Our robot uses a lateral
     </tr>
 </table>
 
-Then, the motion profile computes wheel speeds for each point along the path before caching them. The closest unvisited point along the path both dictates what base speed pulled from the cache in addition to differential speed offset for drift correction. Together, the robot successfully followed spline paths.
+Then, the motion profile computes wheel speeds for each point along the path before caching them. The closest unvisited point along the path both dictates what base speed is pulled from the cache in addition to differential speed offset for drift correction. Together, the robot successfully followed spline paths.
 
 
 ## 4.0 Adaptive Splines 
