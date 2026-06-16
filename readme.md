@@ -216,7 +216,9 @@ The sigmoid serves as a steep continuous step function that collapses to zero fo
 
 Multiplying the activation function by the upper-triangular matrix yields another MxN matrix. Each column represents a single point of N points along the spline **S**. Each row represents the sub-cost contributed by each M obstacles from set **O**. The cumulative summation carries past obstacle costs from previous columns into later columns. This forces obstacle costs to compound if a spline clips through a wall while punishing harder for earlier collisions on the path. As a result, later points along a path "remember" past collisions and act as a deterrent against greedy bias during optimization. 
 
-A final transpose and transformation against a Mx1 ones vector sums all compounded obstacle cost at each point along the path. The result is a sub-cost vector for obstacle cost that is denoted in **Equation 6**. This sub-cost formula was then implemented with NumPy and arithmetic broadcasting. Finally, all spine and obstacle points are interpolated with NumPy. **Obstacles are retrieved from the PGM map, published by the Map Server node, with a radius 1.5 times the size of the map resolution.** This radius serves as a c-space dilation when optimizing for the spline k0 and k1 coefficients. 
+A final transpose and transformation against a Mx1 ones vector sums all compounded obstacle cost at each point along the path. The result is a sub-cost vector for obstacle cost that is denoted in **Equation 6**. 
+
+**Obstacles are then retrieved from the PGM map, published by the Map Server node. Obstacles are given a radius 1.5 times the map resolution.** This radius serves as a c-space dilation when optimizing for the spline k0 and k1 coefficients. 
 
 ### 4.4 Optimizing Splines with Simulated Annealing 
 ### 4.5 Initial Tests 
