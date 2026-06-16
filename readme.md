@@ -129,34 +129,34 @@ Solving for quintic spline coefficients requires knowing variables: **x0, y0, θ
 </table>
 
 ### 4.3 Defining the Cost Function
-A spline can be adaptive by avoiding obstacles in its environment. This requires quantifying spline overlap with a set of obstacles. Potential solutions for a spline are candidate splines with an optimal **(k0,k1)**. However, optimal splines must also minimize acceleration and travel distance to ensure safe and controlled motion when driving. 
+A spline can be adaptive by avoiding obstacles in its environment. This requires quantifying spline overlap with a set of obstacles. Potential solutions for a spline are candidate splines with an optimal **(k0,k1)**. However, optimal splines must also minimize acceleration and arc length to ensure safe and controlled motion when driving. 
 
 <p align="center">
     <img src="equations/eq_2_cost_function.png" style="width: 80%; height: 3rem">
     <figcaption style="text-align: center;"><b>Equation 2:</b> <i>Models the cost function J(S) for spline optimization.</i></figcaption>
 </p>
 
-The cost function in **Equation 2** is a linear combination of sub-costs for arc length, acceleration, and obstacle overlap. Each sub-cost term **f(S)** is tuned by a corresponding scaler. Each sub-cost term **f(S)** returns a **Nx1** vector of costs calculated at each **N** points interpolated along the spline. The sub-cost linear combination is summed and transforms against ones row vector with shape **1xN**.
+The cost function in **Equation 2** is a linear combination of sub-costs for arc length, acceleration, and obstacle overlap. Each sub-cost term **f(S)** is tuned by a corresponding scalar weight. Each sub-cost term **f(S)** returns a **Nx1** vector of costs calculated at each **N** points interpolated along the spline. The sub-cost linear combination is summed and transforms against ones row vector with shape **1xN**.
 
-This results is a linear combination of the sub-cost functions **f(S)** that evaluates cost at every point along the spline. The rows of cost are then summed as a final cost for **J(S)**.
+The result is a linear combination of the sub-cost functions **f(S)** that evaluates cost at every point along the spline. The rows costs are then summed as a final cost for **J(S)**.
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                d1
+                However, the spline arc length and acceleration are approximated in <b>Equation 3</b>. Treating both as costs incentivize short and smoother splines when optimizing. These approximations hold because both terms in this approximate form, or exact form, will trend the same when minimizing cost. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
                 d2
             </p>
         </td>
+        <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p align="center">
                 <img src="equations/eq_3_cost_function_cont.png" alt="Arc discretization motion tracking" width="100%">
                 <figcaption><b>Equation 3:</b> <i>Models .</figcaption>
             </p>
         </td>
-        <td width="4%" style="border: none;"></td>
     </tr>
 </table>
 
