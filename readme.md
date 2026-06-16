@@ -246,6 +246,7 @@ Now with an established cost function, this subsection analyzes the cost map and
 Recalling **Figure 4**, the stationary spline can transform by traversing the k-space; to test different combinations of **(k0,k1)**. If the spline in **Figure 4** travels over the obstacle, the only topological way to get that spline to travel under the obstacle instead is by traveling through it in the k-space. This stands to reason that the non-convex cost map will be riddled with steep ridges in the k-space where there are obstacle collisions in the c-space. Then between these ridges, local minimum valleys will be difficult to distinguish from absolute minimums. Given this is what is observed in **Figure 5**, simulated annealing is the chosen optimizer algorithm when seeding the search at (k0,k1)=(0,0). 
 
 ### 4.5 Initial Tests 
+The last couple subsections defined a cost function and an optimizer to minimize that cost by choosing an optimal **(k0,k1)** from the k-space. Before testing in a Gazebo-RViz environment, this apparatus is tested below. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -270,7 +271,10 @@ Recalling **Figure 4**, the stationary spline can transform by traversing the k-
             <img src="figures/fig_9_sim_anneal.png">
         </td>
     </tr>
-</table><br>
+</table>
+<div>
+    <figcaption style="text-align: center"><b>Figures 6-9:</b> <i>Illustrates spline adaptation to environment with simulated annealing.</i></figcaption>
+</div><br>
 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
@@ -286,6 +290,9 @@ Recalling **Figure 4**, the stationary spline can transform by traversing the k-
         </td>
     </tr>
 </table>
+<div>
+    <figcaption style="text-align: center"><b>Figures 10-11:</b> <i>Illustrates the leaky obstacles problem.</i></figcaption>
+</div><br>
 
 
 ## 5.0 Trajectory Planning Package Pipeline
