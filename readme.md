@@ -342,16 +342,21 @@ Once the initial waypoints are parsed by the `nav_node`, the waypoints are place
     <figcaption style="text-align: center;"><b>Figure 13:</b> <i>Illustrates calculating dropout of waypoint C.</i></figcaption>
 </p>
 
-As seen in **Figure 13**, each node is a waypoint such that edges are optimized splines that connect them. Waypoint dropout begins by moving a three-node slide down the list of waypoints. In the illustration, the sum cost from spline **BC** to **CD** is compared to the potential spline **BD**. Spline **BD** is created and optimized. Waypoint **C** is dropped from the list if the cost of **BD** is less than or equal to a percent difference compared to the sum cost of **BC-CD**. 
+As seen in **Figure 13**, each node is a waypoint such that edges are optimized splines that connect them. Waypoint dropout begins by moving a three-node slider down the list of waypoints. In the illustration, the sum cost from spline **BC** to **CD** is compared to the potential spline **BD**. Spline **BD** is created and optimized. Waypoint **C** is dropped from the list if the cost of **BD** is less than or equal to a percent difference compared to the sum cost of **BC-CD**. 
 
 The dropout slider traverses down the list of waypoints while making these greedy cost comparisons. If dropping a waypoint detrimentally affects a path (i.e. intersecting an obstacle) the cost of the comparative spline will be noticeably larger. This percent difference filter between **BC-CD** compared to **BD** ensures that dropping waypoint **C** does not compromise the path. 
 
 Dropout continues either until a certain number of waypoints are dropped, or until no waypoints are able to be dropped. **Any new splines created in this process are memoized after they are optimized; all known splines are cached.**
 
 ### 5.3 Final Heading Tuning
-The final task of the `spline_node` is final heading tuning. 
+The final task of the `spline_node` is the tuning of the final heading at the goal pose. Once dropout is complete, the final waypoint [where the goal pose is] has its heading adjusted. An upper and lower [counter clockwise and clockwise] heading is offset from the base heading by a set bound value. A binary search starts by comparing the cost of the base spline to the other two. 
+
+The spline with a heading with the lowest cost is set as the new base spline. The bound value is divided by the epoch. Epochs increment for each comparison. After 2-5 epochs, the binary search adjusts the heading of the final waypoint while caching its interpolated path. 
+
+The original A* path may have reached the goal pose while pushing up against a wall. If the final waypoint sets its heading to that of the final A* cell, the final spline too may end up squished against the wall. Final heading tuning is used to handle this. 
 
 ### 5.4 ROS2 Package Design and Pipeline 
+Once dropout and final heading tuning is complete, the full spline path is reconstructed and sent back to `nav_node` from `spline_node` as the service response. 
 
 ## 6.0 Results 
 
