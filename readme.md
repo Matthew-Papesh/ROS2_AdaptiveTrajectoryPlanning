@@ -372,7 +372,7 @@ Shown in **Figure 14**, the robot began its navigation in the top right of the m
 
 It can be seen how the overall path initially intersected the map center. At the center, there was a sharp turn that was unnecessary. The dropout process removed these center waypoints and smoothed the path. This occurred four times in **Figure 14**. 
 
-Eventually, the dropout process began comparing top-right waypoints to bottom left ones. **A final path was found that circumvented the entire map center in one large smooth arc.** This final path followed the initial A* and initial splines, but was able to explore enough to discover a more optimal path that avoids obstacles and the map center.
+Eventually, the dropout process began comparing top-right waypoints to bottom left waypoints. **A final path was found that circumvented the entire map center in one large smooth arc.** This final path followed the initial A* and initial splines, but was able to explore enough to discover a more optimal path that avoids obstacles and the map center.
 
 <p align="center">
     <img src="figures/fig_15_test_2.gif" style="width: 100%;">
@@ -407,9 +407,31 @@ Eventually, the dropout process began comparing top-right waypoints to bottom le
     <figcaption style="text-align: center"><b>Figures 16-19:</b> <i>Illustrates adaptive spline trajectory planning.</i></figcaption>
 </div><br>
 
-
+In te remainder illustrations, **Figure 15** shows a video demonstration of the trajectory planner finding and driving a motion-profiled path. **Figures 16-19** show other trajectory planning instances that lead to a marker goal pose. In each case, every path respects the c-space. Every **Test B** and **Test C** both also show how each of its splines were optimized with their colored point clouds. **This is similar to the initial optimizer test in section 4.5**. 
 
 ## 7.0 Conclusion
+### 7.1 Project Review
+This concludes the project. To summarize, a ROS2 TurtleBot3 navigates a simulation environment with adaptive spline planning. Splines are governed by a custom cost function. An optimizer was chosen, and a tuning procedure for the overall path, with dropout, was implemented. 
+
+The `nav_node` handles motion profiling and lateral PID feedback for auto-correction. `spline_node` handles creating and optimizing splines; this node also handles the dropout process and final path construction. The `nav_node` sends a service request, with waypoints from an A* search, to `spline_node`, and the response is the interpolated path. 
+
+### 7.2 Project Setup
+This project is composed between the `navigation` and `navigation_interfaces` packages. The latter implements the service format. The former is the main package. 
+
+Once the ROS2 environment has been setup in the CLI terminal, the entire project can be launched with the following command: 
+
+<p style="text-align: center;">
+    <code>ros2 launch navigation sim.launch.py</code>
+</p>
+
+The robot can be driven by selecting a goal pose with the RViz goal pose feature. 
+
+### 7.3 Future Works
+For future work, combining this adaptive planner with real-time adaptive controls would be the next step of development. The PGM map is static here, but can be set dynamic; the map could be updated according to sonar sensor data. 
+
+Further work on how the robot can adjust trajectories in dynamic/real time with a dynamic PGM map may also demand further revision of this work. Although this current trajectory planner is efficient for its complexity, between optimizer hyper-parameters, the waypoint dropout process, and the final heading tuning process, these procedures could be further optimized in software.
+
+That is all for now. Thank you for reading. **: )**
 
 ## 8.0 References 
 [[1]](https://doi.org/10.3390/machines13080710) Sun, Z., Luo, Q., Zhang, Z., Peng, Y., Liu, Q., Zheng, S., & Liu, J. (2025). An Integrated Path Planning and Tracking Framework Based on Adaptive Heuristic JPS and B-Spline Optimization. Machines, 13(8), 710. [https://doi.org/10.3390/machines13080710](https://doi.org/10.3390/machines13080710)
