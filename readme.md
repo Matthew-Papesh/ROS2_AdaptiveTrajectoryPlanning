@@ -379,6 +379,34 @@ Eventually, the dropout process began comparing top-right waypoints to bottom le
     <figcaption style="text-align: center;"><b>Figure 15:</b> <i>RViz2 video of trajectory planning and driving.</i></figcaption>
 </p>
 
+<table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <figcaption style="text-align: center"><b><i>Drive Test A</i></b></figcaption>
+            <img src="figures/fig_16_test_3.png">
+        </td>
+        <td width="2%" style="border: none;"></td>
+        <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <figcaption style="text-align: center"><b><i>Drive Test B</i></b></figcaption>
+            <img src="figures/fig_17_test_4.png">
+        </td>
+    </tr>
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <figcaption style="text-align: center"><b><i>Drive Test C</i></b></figcaption>
+            <img src="figures/fig_18_test_5.png">
+        </td>
+        <td width="2%" style="border: none;"></td>
+        <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <figcaption style="text-align: center"><b><i>Drive Test D</i></b></figcaption>
+            <img src="figures/fig_19_test_6.png">
+        </td>
+    </tr>
+</table>
+<div>
+    <figcaption style="text-align: center"><b>Figures 16-19:</b> <i>Illustrates adaptive spline trajectory planning.</i></figcaption>
+</div><br>
+
 
 
 ## 7.0 Conclusion
