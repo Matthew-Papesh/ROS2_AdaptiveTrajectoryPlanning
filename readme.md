@@ -201,21 +201,22 @@ The sigmoid serves as a steep continuous step function that collapses to zero fo
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                d1
-            </p>
-            <p style="margin: 0; padding: 0; margin-bottom: auto">
-                d2
+                This work then culminates in <b>Equation 6</b>. The activation function with shape MxN is multiplied by an upper-triangular NxN matrix <b>U_N</b>. This applies a cumulative sum operation across the columns of the activation function in <b>Equation 5</b>. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p align="center">
                 <img src="equations/eq_6_obs_cost.png" alt="Arc discretization motion tracking" width="100%">
-                <figcaption><b>Equation 6:</b> <i>Models .</i></figcaption>
+                <figcaption><b>Equation 6:</b> <i>Models the final obstacle cost.</i></figcaption>
             </p>
         </td>
     </tr>
 </table>
+
+Multiplying the activation function by the upper-triangular yields another MxN matrix. Each column represents a single point of N points along the spline **S**. Each row represents the sub-cost contributed by each M obstacles from set **O**. The cumulative summation carries past obstacle costs from previous columns into later columns. This forces obstacle force to compound if a spline clips through a wall while punishing harder for earlier collisions than later ones along the path. As a result, later points along a path "remember" past collisions that deter greedy bias during optimization. 
+
+A final transpose and transformation against a Mx1 ones vector sums all compounded obstacle cost at each point along the path. The result is a sub-cost vector for obstacle cost that is denoted in **Equation 6**. 
 
 ### 4.4 Optimizing Splines with Simulated Annealing 
 ### 4.5 Initial Tests 
