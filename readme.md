@@ -247,6 +247,27 @@ Recalling **Figure 4**, the stationary spline can transform by traversing the k-
 
 ### 4.5 Initial Tests 
 
+<table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <img src="figures/fig_6_sim_anneal.png">
+        </td>
+        <td width="2%" style="border: none;"></td>
+        <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <img src="figures/fig_7_sim_anneal.png">
+        </td>
+    </tr>
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <img src="figures/fig_8_sim_anneal.png">
+        </td>
+        <td width="2%" style="border: none;"></td>
+        <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <img src="figures/fig_9_sim_anneal.png">
+        </td>
+    </tr>
+</table>
+
 ## 5.0 Trajectory Planning Package Pipeline
 
 ### 5.1 Waypoint Parsing 
