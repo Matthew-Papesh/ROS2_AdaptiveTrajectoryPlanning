@@ -338,7 +338,7 @@ Finally, the local c-space at each waypoint is placed in a kernel such that occu
 Once the initial waypoints are parsed by the `nav_node`, the waypoints are placed in a `nav_msgs/Path` instance; it is then sent over a service request to the `spline_node`. The spline node initiates by creating and optimizing splines between each of the waypoints. 
 
 <p align="center">
-    <img src="figures/fig_12_dropout.png" style="width: 90%;">
+    <img src="figures/fig_12_dropout.png" style="width: 60%;">
     <figcaption style="text-align: center;"><b>Figure 12:</b> <i>Illustrates calculating dropout of waypoint C.</i></figcaption>
 </p>
 
