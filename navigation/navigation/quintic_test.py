@@ -7,8 +7,8 @@ def radians(degrees: float):
 
 def main(args=None):
     
-    p0 = (0.0, -3.0, radians(0))
-    p1 = (3.0, 4.0, radians(0))
+    p0 = (0, 0, radians(0))
+    p1 = (5, -2, radians(0))
 
     model = Quintic(p0, p1)
     model.set_inverse_transform(0,0,0)
@@ -19,7 +19,8 @@ def main(args=None):
         (5,1.2),(5,2.2),(5,3.2),
         }, 1)
 
-    #model.query_cost_map(200, (-10.0, 10.0), (-10.0, 10.0), export_file='spline_costs.csv')
+    model.query_cost_map(200, (-10.0, 10.0), (-10.0, 10.0), export_file='spline_costs.csv')
+    return
     #model.import_query_cost_map(import_file='spline_costs.csv')
     #model.show_cost_map(show_cost_trend=True)
     model.set_curvature(0,0)
