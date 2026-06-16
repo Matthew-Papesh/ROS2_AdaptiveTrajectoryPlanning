@@ -154,7 +154,7 @@ The result is a vector that evaluates cost at every point along the spline. The 
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p align="center">
-                <img src="equations/eq_3_cost_function_cont.png" alt="Arc discretization motion tracking" width="100%">
+                <img src="equations/eq_3_cost_function_cont.png" alt="Defining the Cost Function" width="100%">
                 <figcaption><b>Equation 3:</b> <i>Models J(S) with sub-costs and hyper parameters.</figcaption>
             </p>
         </td>
@@ -170,7 +170,7 @@ The subsection above outlines the cost function. This subsection describes in de
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p align="center">
-                <img src="equations/eq_4_obs_mtx.png" alt="Arc discretization motion tracking" width="100%">
+                <img src="equations/eq_4_obs_mtx.png" alt="Obstacle and Spline matrices" width="100%">
                 <figcaption><b>Equation 4:</b> <i>Models MxN matrix D; permutes sets S and O to compute D.</i></figcaption>
             </p>
         </td>
@@ -207,7 +207,7 @@ The sigmoid serves as a steep continuous step function that collapses to zero fo
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p align="center">
-                <img src="equations/eq_6_obs_cost.png" alt="Arc discretization motion tracking" width="100%">
+                <img src="equations/eq_6_obs_cost.png" alt="Final obstacle cost" width="100%">
                 <figcaption><b>Equation 6:</b> <i>Models the final obstacle cost.</i></figcaption>
             </p>
         </td>
@@ -236,7 +236,7 @@ Now with an established cost function, this subsection analyzes the cost map and
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p align="center">
-                <img src="figures/fig_5_cost_map.png" alt="Arc discretization motion tracking" width="100%">
+                <img src="figures/fig_5_cost_map.png" alt="Cost Map" width="100%">
                 <figcaption><b>Figure 5:</b> <i>Illustrates the cost map for a spline S(t).</i></figcaption>
             </p>
         </td>
@@ -308,9 +308,32 @@ This exercise is the reason why the obstacle radius is 1.5 times that of the map
 Lastly, recalling section 4.4, the number of ridges on the cost can scale exponentially with the number of homotopy classes of splines. **The number of classes, and convergence time, can be minimized for large sets of obstacles by plugging these leaks.** 
 
 ## 5.0 Trajectory Planning Package Pipeline
+Given our functional adaptive splines and optimizer, the section will outline how it is used in ROS2. To recall, a TurtleBot3 navigates a PGM map that is published by a Map Server node. The subsections below describe further.
 
 ### 5.1 Waypoint Parsing 
-- A* -> Parsing -> Centroid Snapping = Waypoints 
+Once in RViz, the user can use the Goal Pose feature. The `nav_node` subscribes to this topic and receives a goal pose. An A* search is run to find a valid path from the robot to this pose. 
+<table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p style="margin: 0; padding: 0; margin-bottom: 1rem">
+                As seen in <b>Figure 12</b>, the robot sits at rest at the bottom left of the figure. Meanwhile a goal pose is centered on the map. The A* path is found and visualized as the brown occupancy grid. 
+            </p>
+            <p style="margin: 0; padding: 0; margin-bottom: 1rem">
+                Given the A* path, corners are detected where path direction changes. These are parsed and the rest of the path is filtered out. Waypoints are placed at the midpoints between these corners. Each midpoint points in a cardinal direction; this is illustrated by the blue arrow in <b>Figure 12</b>. The average between the current and next waypoint defines its heading. 
+            </p>
+        </td>
+        <td width="4%" style="border: none;"></td>
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p align="center">
+                <img src="figures/fig_12_a_star.png" alt="Arc discretization motion tracking" width="100%">
+                <figcaption><b>Figure 12:</b> <i>Illustrates the A* search for waypoints.</i></figcaption>
+            </p>
+        </td>
+    </tr>
+</table>
+
+Finally, the local c-space at each waypoint is placed in a kernel such that occupied cells are filtered out. A centroid is calculated in the local free space in that kernel. <b>This snaps waypoints to local centroids to address the "wall hugging" symptom of A* heuristics.</b> 
+
 ### 5.2 Waypoint Dropout 
 ### 5.3 Final Heading Tuning 
 ### 5.4 ROS2 Package Design and Pipeline 
