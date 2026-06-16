@@ -308,7 +308,7 @@ This exercise is the reason why the obstacle radius is 1.5 times that of the map
 Lastly, recalling section 4.4, the number of ridges on the cost can scale exponentially with the number of homotopy classes of splines. **The number of classes, and convergence time, can be minimized for large sets of obstacles by plugging these leaks.** 
 
 ## 5.0 Trajectory Planning Package Pipeline
-Given our functional adaptive splines and optimizer, the section will outline how it is used in ROS2. To recall, a TurtleBot3 navigates a PGM map that is published by a Map Server node. The subsections below describe further.
+Given our functional adaptive splines and optimizer, this section will outline how it is used in ROS2. To recall, a TurtleBot3 navigates a PGM map that is published by a Map Server node. The subsections below describe further.
 
 ### 5.1 Waypoint Parsing 
 Once in RViz, the user can use the Goal Pose feature. The `nav_node` subscribes to this topic and receives a goal pose. An A* search is run to find a valid path from the robot to this pose. 
@@ -335,7 +335,22 @@ Once in RViz, the user can use the Goal Pose feature. The `nav_node` subscribes 
 Finally, the local c-space at each waypoint is placed in a kernel such that occupied cells are filtered out. A centroid is calculated in the local free space in that kernel. <b>This snaps waypoints to local centroids to address the "wall hugging" symptom of A* heuristics.</b> 
 
 ### 5.2 Waypoint Dropout 
-### 5.3 Final Heading Tuning 
+Once the initial waypoints are parsed by the `nav_node`, the waypoints are placed in a `nav_msgs/Path` instance; it is then sent over a service request to the `spline_node`. The spline node initiates by creating and optimizing splines between each of the waypoints. 
+
+<p align="center">
+    <img src="figures/fig_12_dropout.png" style="width: 90%;">
+    <figcaption style="text-align: center;"><b>Figure 12:</b> <i>Illustrates calculating dropout of waypoint C.</i></figcaption>
+</p>
+
+As seen in **Figure 12**, each node is a waypoint such that edges are optimized splines that connect them. Waypoint dropout begins by moving a three-node slide down the list of waypoints. In the illustration, the sum cost from spline **BC** to **CD** is compared to the potential spline **BD**. Spline **BD** is created and optimized. Waypoint **C** is dropped from the list if the cost of **BD** is less than or equal to a percent difference compared to the sum cost of **BC-CD**. 
+
+The dropout slider traverses down the list of waypoints while making these greedy cost comparisons. If dropping a waypoint detrimentally affects a path (i.e. intersecting an obstacle) the cost of the comparative spline will be noticeably larger. This percent difference filter between **BC-CD** compared to **BD** ensures that dropping waypoint **C** does not compromise the path. 
+
+Dropout continues either until a certain number of waypoints are dropped, or until no waypoints are able to be dropped. **Any new splines created in this process are memoized after they are optimized; all known splines are cached.**
+
+### 5.3 Final Heading Tuning
+The final task of the `spline_node` is final heading tuning. 
+
 ### 5.4 ROS2 Package Design and Pipeline 
 
 ## 6.0 Results 
