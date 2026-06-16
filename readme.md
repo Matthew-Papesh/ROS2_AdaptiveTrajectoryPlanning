@@ -227,7 +227,7 @@ Now with an established cost function, this subsection analyzes the cost map and
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                d
+                Now with an established cost function, this subsection analyzes the cost map and optimization process for tuning splines. This begins with viewing the cost map.
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
