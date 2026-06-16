@@ -101,7 +101,7 @@ Each path is made up of parametric quintic polynomials based on an input **t** w
     <figcaption style="text-align: center;"><b>Equation 1:</b> <i>Models quintic spline S(t).</i></figcaption>
 </p>
 
-Both functions' coefficients are solved for with a time-parameter matrix as the Boundary Value Problem. The result is a spline **S(t) = (x(t), y(t))**, and its first and second derivative; computed via Horner's method. This is implemented in the `Quintic` class in `quintic.py`. Finally, our robot computes splines relatively between poses. 
+Both functions' coefficients are solved for with a time-parameter matrix as the Boundary Value Problem. The result is a spline **S(t) = (x(t), y(t))**, and its first and second derivatives, computed via Horner's method. This is implemented in the `Quintic` class in `quintic.py`. Finally, our robot computes splines relatively between poses. 
 
 ### 4.2 Cost-Optimization Problem and the K-Space
 The spline exploration-to-safety bottleneck mentioned before is an optimization problem. Obstacle avoidance can be quantified in a cost metric in terms of spline parameters. These parameters then can be tuned by descending the cost map. 
@@ -214,9 +214,9 @@ The sigmoid serves as a steep continuous step function that collapses to zero fo
     </tr>
 </table>
 
-Multiplying the activation function by the upper-triangular matrix yields another MxN matrix. Each column represents a single point of N points along the spline **S**. Each row represents the sub-cost contributed by each M obstacles from set **O**. The cumulative summation carries past obstacle costs from previous columns into later columns. This forces obstacle force to compound if a spline clips through a wall while punishing harder for earlier collisions than later ones along the path. As a result, later points along a path "remember" past collisions that deter greedy bias during optimization. 
+Multiplying the activation function by the upper-triangular matrix yields another MxN matrix. Each column represents a single point of N points along the spline **S**. Each row represents the sub-cost contributed by each M obstacles from set **O**. The cumulative summation carries past obstacle costs from previous columns into later columns. This forces obstacle costs to compound if a spline clips through a wall while punishing harder for earlier collisions on the path. As a result, later points along a path "remember" past collisions and act as a deterrent against greedy bias during optimization. 
 
-A final transpose and transformation against a Mx1 ones vector sums all compounded obstacle cost at each point along the path. The result is a sub-cost vector for obstacle cost that is denoted in **Equation 6**. 
+A final transpose and transformation against a Mx1 ones vector sums all compounded obstacle cost at each point along the path. The result is a sub-cost vector for obstacle cost that is denoted in **Equation 6**. This sub-cost formula was then implemented with NumPy and arithmetic broadcasting. Finally, all spine and obstacle points are interpolated with NumPy. **Obstacles are retrieved from the PGM map, published by the Map Server node, with a radius 1.5 times the size of the map resolution.** This radius serves as a c-space dilation when optimizing for the spline k0 and k1 coefficients. 
 
 ### 4.4 Optimizing Splines with Simulated Annealing 
 ### 4.5 Initial Tests 
