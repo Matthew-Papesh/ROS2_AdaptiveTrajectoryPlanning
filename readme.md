@@ -407,7 +407,7 @@ Eventually, the dropout process began comparing top-right waypoints to bottom-le
     <figcaption style="text-align: center"><b>Figures 16-19:</b> <i>Illustrates adaptive spline trajectory planning.</i></figcaption>
 </div><br>
 
-In the remaining illustrations, **Figure 15** shows a video demonstration of the trajectory planner finding and driving a motion-profiled path. **Figures 16-19** show other trajectory planning instances that lead to a marker goal pose. In each case, every path respects the c-space. Every **Test B** and **Test C** both also show how each of their splines was optimized with their colored point clouds. **This is similar to the initial optimizer test in section 4.5**. 
+In the remaining illustrations, **Figure 15** shows a video demonstration of the trajectory planner finding and driving a motion-profiled path. **Figures 16-19** show other trajectory planning instances that lead to a marker goal pose. In each case, every path respects the c-space. Both **Test B** and **Test C** also show how each of their splines was optimized with their colored point clouds. **This is similar to the initial optimizer test in section 4.5**. 
 
 ## 7.0 Conclusion
 ### 7.1 Project Review
