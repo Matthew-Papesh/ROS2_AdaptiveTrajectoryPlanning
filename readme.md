@@ -319,7 +319,7 @@ Once in RViz, the user can use the Goal Pose feature. The `nav_node` subscribes 
                 As seen in <b>Figure 12</b>, the robot sits at rest at the bottom left of the figure. Meanwhile, a goal pose is centered on the map. The A* path is found and visualized as the brown occupancy grid. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                Given the A* path, corners are detected where path direction changes. These are parsed, and the rest of the path is filtered out. Waypoints are placed at the midpoints between these corners. Each midpoint points in a cardinal direction; this is illustrated by the blue arrow in <b>Figure 12</b>. The average between the current and next waypoint defines its heading. 
+                Given the A* path, corners are detected where the path direction changes. These are parsed, and the rest of the path is filtered out. Waypoints are placed at the midpoints between these corners. Each midpoint points in a cardinal direction; this is illustrated by the blue arrows in <b>Figure 12</b>. The average between the current and next waypoints' cardinalities defines its heading. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
