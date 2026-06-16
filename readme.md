@@ -88,13 +88,13 @@ The second half of motion is the feedback loop. Our robot uses a lateral PID con
     </tr>
 </table>
 
-Then, the motion profile computes wheel speeds for each point along the path before caching them. The closest unvisited point along the path both dictates what base speed is pulled from the cache in addition to the differential speed offset for drift correction. Together, the robot successfully followed spline paths.
+Then, the motion profile computes wheel speeds for each point along the path before caching them. The closest unvisited point along the path dictates what base speed is pulled from the cache in addition to the differential speed offset for drift correction. Together, the robot successfully followed spline paths.
 
 ## 4.0 Intelligent and Adaptive Splines 
 The remainder of this document covers the custom approach to adaptive spline planning. This section covers how splines can act as intelligent agents that adapt to avoid obstacles in the environment. **This is the central contribution of this project**. All work is implemented with NumPy. 
 
 ### 4.1 Quintic Splines  
-Each path is made up of parametric quintic polynomials based on an input **t** with domain [0,1]. This function maps **t** → **(x,y)**. A path is a set of poses **(x,y,θ)**. A single spline interpolates between one pose to the next. If spline **S** interpolates from pose **P** to pose **P`**, then functions **x(t)** and **y(t)** take the form: 
+Each path is made up of parametric quintic polynomials based on an input **t** with domain [0,1]. This function maps **t** → **(x,y)**. A path is a set of poses **(x,y,θ)**. A single spline interpolates between one pose and to the next. If spline **S** interpolates from pose **P** to pose **P`**, then functions **x(t)** and **y(t)** take the form: 
 
 <p align="center">
     <img src="equations/eq_1_quintic.png" style="width: 50%">
@@ -243,7 +243,7 @@ Now with an established cost function, this subsection analyzes the cost map and
     </tr>
 </table>
 
-Recalling **Figure 4**, the stationary spline can transform by traversing the k-space; to test different combinations of **(k0,k1)**. If the spline in **Figure 4** travels over the obstacle, the only topological way to get that spline to travel under the obstacle instead is by traveling through it in the k-space. This stands to reason that the non-convex cost map will be riddled with steep ridges in the k-space where there are obstacle collisions in the c-space. Then between these ridges, local minimum valleys will be difficult to distinguish from absolute minimums. Given this is what is observed in **Figure 5**, simulated annealing is the chosen optimizer algorithm when seeding the search at (k0,k1)=(0,0). 
+Recalling **Figure 4**, the stationary spline can be transformed by traversing the k-space to test different combinations of **(k0,k1)**. If the spline in **Figure 4** travels over the obstacle, the only topological way to get that spline to travel under the obstacle instead is by traveling through it in the k-space. This stands to reason that the non-convex cost map will be riddled with steep ridges in the k-space where there are obstacle collisions in the c-space. Then between these ridges, local minimum valleys will be difficult to distinguish from absolute minimums. Given this is what is observed in **Figure 5**, simulated annealing is the chosen optimizer algorithm when seeding the search at (k0,k1)=(0,0). 
 
 ### 4.5 Initial Tests 
 The last couple of subsections defined a cost function and an optimizer to minimize that cost by choosing an optimal **(k0,k1)** from the k-space. Before testing in a Gazebo-RViz environment, this apparatus is tested below. 
@@ -301,11 +301,11 @@ Additionally, **Test C shows** how changing the final waypoint's pose to being p
 
 However, although the optimizer converges well on splines that adapt to their environment, there are edge cases. The biggest is the **leaky obstacle problem**. As seen in **Figures 10-11**, an obstacle can leave a slight opening, demonstrated in **test E**. The optimal spline in test E may be impractical. 
 
-But, if the obstacles are modeled based on the c-space, the obstacle radius cannot make obstacles tangent at their perimeters. The optimizer can find solutions that squeeze between c-space occupied cells similarly to in test E. However, once this leaky crevice is patched in **test F**, the optimizer correctly finds the truly optimal spline. 
+But if the obstacles are modeled based on the c-space, the obstacle radius cannot make obstacles tangent at their perimeters. The optimizer can find solutions that squeeze between c-space occupied cells similarly to in test E. However, once this leaky crevice is patched in **test F**, the optimizer correctly finds the truly optimal spline. 
 
 This exercise is the reason why the obstacle radius is 1.5 times that of the map cell resolution. Because when occupied cells are mapped as obstacles, this radius forces obstacle regions to overlap and plug any leaks in the cost map. 
 
-Lastly, recalling section 4.4, the number of ridges on the cost can scale exponentially with the number of homotopy classes of splines. **The number of classes, and convergence time, can be minimized for large sets of obstacles by plugging these leaks.** 
+Lastly, recalling section 4.4, the number of ridges on the cost can scale exponentially with the number of homotopy classes of splines. **The number of classes and convergence time can be minimized for large sets of obstacles by plugging these leaks.** 
 
 ## 5.0 Trajectory Planning Package Pipeline
 Given our functional adaptive splines and optimizer, this section will outline how it is used in ROS2. To recall, a TurtleBot3 navigates a PGM map that is published by a Map Server node. The subsections below describe further.
@@ -316,10 +316,10 @@ Once in RViz, the user can use the Goal Pose feature. The `nav_node` subscribes 
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                As seen in <b>Figure 12</b>, the robot sits at rest at the bottom left of the figure. Meanwhile a goal pose is centered on the map. The A* path is found and visualized as the brown occupancy grid. 
+                As seen in <b>Figure 12</b>, the robot sits at rest at the bottom left of the figure. Meanwhile, a goal pose is centered on the map. The A* path is found and visualized as the brown occupancy grid. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                Given the A* path, corners are detected where path direction changes. These are parsed and the rest of the path is filtered out. Waypoints are placed at the midpoints between these corners. Each midpoint points in a cardinal direction; this is illustrated by the blue arrow in <b>Figure 12</b>. The average between the current and next waypoint defines its heading. 
+                Given the A* path, corners are detected where path direction changes. These are parsed, and the rest of the path is filtered out. Waypoints are placed at the midpoints between these corners. Each midpoint points in a cardinal direction; this is illustrated by the blue arrow in <b>Figure 12</b>. The average between the current and next waypoint defines its heading. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
@@ -344,19 +344,19 @@ Once the initial waypoints are parsed by the `nav_node`, the waypoints are place
 
 As seen in **Figure 13**, each node is a waypoint such that edges are optimized splines that connect them. Waypoint dropout begins by moving a three-node slider down the list of waypoints. In the illustration, the sum cost from spline **BC** to **CD** is compared to the potential spline **BD**. Spline **BD** is created and optimized. Waypoint **C** is dropped from the list if the cost of **BD** is less than or equal to a percent difference compared to the sum cost of **BC-CD**. 
 
-The dropout slider traverses down the list of waypoints while making these greedy cost comparisons. If dropping a waypoint detrimentally affects a path (i.e. intersecting an obstacle) the cost of the comparative spline will be noticeably larger. This percent difference filter between **BC-CD** compared to **BD** ensures that dropping waypoint **C** does not compromise the path. 
+The dropout slider traverses down the list of waypoints while making these greedy cost comparisons. If dropping a waypoint detrimentally affects a path (i.e., intersecting an obstacle), the cost of the comparative spline will be noticeably higher. This percent difference filter between **BC-CD** compared to **BD** ensures that dropping waypoint **C** does not compromise the path. 
 
 Dropout continues either until a certain number of waypoints are dropped, or until no waypoints are able to be dropped. **Any new splines created in this process are memoized after they are optimized; all known splines are cached.**
 
 ### 5.3 Final Heading Tuning
-The final task of the `spline_node` is the tuning of the final heading at the goal pose. Once dropout is complete, the final waypoint [where the goal pose is] has its heading adjusted. An upper and lower [counter clockwise and clockwise] heading is offset from the base heading by a set bound value. A binary search starts by comparing the cost of the base spline to the other two. 
+The final task of the `spline_node` is the tuning of the final heading at the goal pose. Once dropout is complete, the final waypoint [where the goal pose is] has its heading adjusted. An upper and lower [counterclockwise and clockwise] heading is offset from the base heading by a set bound value. A binary search starts by comparing the cost of the base spline to the other two. 
 
 The spline with a heading with the lowest cost is set as the new base spline. The bound value is divided by the epoch. Epochs increment for each comparison. After 2-5 epochs, the binary search adjusts the heading of the final waypoint while caching its interpolated path. 
 
 The original A* path may have reached the goal pose while pushing up against a wall. If the final waypoint sets its heading to that of the final A* cell, the final spline too may end up squished against the wall. Final heading tuning is used to handle this. 
 
 ### 5.4 Driving the Path
-Once dropout and final heading tuning is complete, the full spline path is reconstructed and sent back to `nav_node` from `spline_node` as the service response. The `nav_node` then applies a trapezoidal motion profile with a PID feedback controller as illustrated in section 3.0. 
+Once dropout and final heading tuning are complete, the full spline path is reconstructed and sent back to `nav_node` from `spline_node` as the service response. The `nav_node` then applies a trapezoidal motion profile with a PID feedback controller as illustrated in section 3.0. 
 
 ## 6.0 Results 
 This all culminates in a TurtleBot3 driving along adaptive splines to navigate to a set goal pose in the Gazebo-RViz Sim Environment. This is seen below.
@@ -368,11 +368,11 @@ This all culminates in a TurtleBot3 driving along adaptive splines to navigate t
 
 Shown in **Figure 14**, the robot began its navigation in the top right of the map and ended at the bottom left goal pose. The green path of grid cells represents the path taken. **The point clouds visualize how each spline was optimized.** Each colored arc was a spline considered and optimized. Fanned arcs that **are on** the ground show how each spline converged onto yellow splines from purple splines. 
 
-**Figure 14** also shows some optimized splines visualized as rising above the map in arcs. **Spline tuning that is projected in the Z-axis represent successful waypoint dropouts**. 
+**Figure 14** also shows some optimized splines visualized as rising above the map in arcs. **Spline tuning that is projected in the Z-axis represents successful waypoint dropouts**. 
 
 It can be seen how the overall path initially intersected the map center. At the center, there was a sharp turn that was unnecessary. The dropout process removed these center waypoints and smoothed the path. This occurred four times in **Figure 14**. 
 
-Eventually, the dropout process began comparing top-right waypoints to bottom left waypoints. **A final path was found that circumvented the entire map center in one large smooth arc.** This final path followed the initial A* and initial splines, but was able to explore enough to discover a more optimal path that avoids obstacles and the map center.
+Eventually, the dropout process began comparing top-right waypoints to bottom-left waypoints. **A final path was found that circumvented the entire map center in one large smooth arc.** This final path followed the initial A* and initial splines, but was able to explore enough to discover a more optimal path that avoids obstacles and the map center.
 
 <p align="center">
     <img src="figures/fig_15_test_2.gif" style="width: 100%;">
@@ -407,18 +407,18 @@ Eventually, the dropout process began comparing top-right waypoints to bottom le
     <figcaption style="text-align: center"><b>Figures 16-19:</b> <i>Illustrates adaptive spline trajectory planning.</i></figcaption>
 </div><br>
 
-In te remainder illustrations, **Figure 15** shows a video demonstration of the trajectory planner finding and driving a motion-profiled path. **Figures 16-19** show other trajectory planning instances that lead to a marker goal pose. In each case, every path respects the c-space. Every **Test B** and **Test C** both also show how each of its splines were optimized with their colored point clouds. **This is similar to the initial optimizer test in section 4.5**. 
+In the remaining illustrations, **Figure 15** shows a video demonstration of the trajectory planner finding and driving a motion-profiled path. **Figures 16-19** show other trajectory planning instances that lead to a marker goal pose. In each case, every path respects the c-space. Every **Test B** and **Test C** both also show how each of their splines was optimized with their colored point clouds. **This is similar to the initial optimizer test in section 4.5**. 
 
 ## 7.0 Conclusion
 ### 7.1 Project Review
 This concludes the project. To summarize, a ROS2 TurtleBot3 navigates a simulation environment with adaptive spline planning. Splines are governed by a custom cost function. An optimizer was chosen, and a tuning procedure for the overall path, with dropout, was implemented. 
 
-The `nav_node` handles motion profiling and lateral PID feedback for auto-correction. `spline_node` handles creating and optimizing splines; this node also handles the dropout process and final path construction. The `nav_node` sends a service request, with waypoints from an A* search, to `spline_node`, and the response is the interpolated path. 
+The `nav_node` handles motion profiling and lateral PID feedback for auto-correction. The `spline_node` handles creating and optimizing splines; this node also handles the dropout process and final path construction. The `nav_node` sends a service request, with waypoints from an A* search, to `spline_node`, and the response is the interpolated path. 
 
 ### 7.2 Project Setup
-This project is composed between the `navigation` and `navigation_interfaces` packages. The latter implements the service format. The former is the main package. 
+This project is composed of the `navigation` and `navigation_interfaces` packages. The latter implements the service format. The former is the main package. 
 
-Once the ROS2 environment has been setup in the CLI terminal, the entire project can be launched with the following command: 
+Once the ROS2 environment has been set up in the CLI terminal, the entire project can be launched with the following command: 
 
 <p style="text-align: center;">
     <code>ros2 launch navigation sim.launch.py</code>
@@ -429,7 +429,7 @@ The robot can be driven by selecting a goal pose with the RViz goal pose feature
 ### 7.3 Future Works
 For future work, combining this adaptive planner with real-time adaptive controls would be the next step of development. The PGM map is static here, but can be set dynamic; the map could be updated according to sonar sensor data. 
 
-Further work on how the robot can adjust trajectories in dynamic/real time with a dynamic PGM map may also demand further revision of this work. Although this current trajectory planner is efficient for its complexity, between optimizer hyper-parameters, the waypoint dropout process, and the final heading tuning process, these procedures could be further optimized in software.
+Further work on how the robot can adjust trajectories in dynamic/real time with a dynamic PGM map may also demand further revision of this work. Although this current trajectory planner is efficient for its complexity, between optimizer hyperparameters, the waypoint dropout process, and the final heading tuning process, these procedures could be further optimized in software.
 
 That is all for now. Thank you for reading. **: )**
 
