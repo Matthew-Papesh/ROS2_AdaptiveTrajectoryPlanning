@@ -338,11 +338,11 @@ Finally, the local c-space at each waypoint is placed in a kernel such that occu
 Once the initial waypoints are parsed by the `nav_node`, the waypoints are placed in a `nav_msgs/Path` instance; it is then sent over a service request to the `spline_node`. The spline node initiates by creating and optimizing splines between each of the waypoints. 
 
 <p align="center">
-    <img src="figures/fig_12_dropout.png" style="width: 60%;">
-    <figcaption style="text-align: center;"><b>Figure 12:</b> <i>Illustrates calculating dropout of waypoint C.</i></figcaption>
+    <img src="figures/fig_13_dropout.png" style="width: 60%;">
+    <figcaption style="text-align: center;"><b>Figure 13:</b> <i>Illustrates calculating dropout of waypoint C.</i></figcaption>
 </p>
 
-As seen in **Figure 12**, each node is a waypoint such that edges are optimized splines that connect them. Waypoint dropout begins by moving a three-node slide down the list of waypoints. In the illustration, the sum cost from spline **BC** to **CD** is compared to the potential spline **BD**. Spline **BD** is created and optimized. Waypoint **C** is dropped from the list if the cost of **BD** is less than or equal to a percent difference compared to the sum cost of **BC-CD**. 
+As seen in **Figure 13**, each node is a waypoint such that edges are optimized splines that connect them. Waypoint dropout begins by moving a three-node slide down the list of waypoints. In the illustration, the sum cost from spline **BC** to **CD** is compared to the potential spline **BD**. Spline **BD** is created and optimized. Waypoint **C** is dropped from the list if the cost of **BD** is less than or equal to a percent difference compared to the sum cost of **BC-CD**. 
 
 The dropout slider traverses down the list of waypoints while making these greedy cost comparisons. If dropping a waypoint detrimentally affects a path (i.e. intersecting an obstacle) the cost of the comparative spline will be noticeably larger. This percent difference filter between **BC-CD** compared to **BD** ensures that dropping waypoint **C** does not compromise the path. 
 
