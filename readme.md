@@ -225,13 +225,13 @@ Now with an established cost function, this subsection analyzes the cost map and
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
-        <td width="40%" valign="top" style="margin: 0; padding: 0; border: none;">
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
                 d
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
-        <td width="56%" valign="top" style="margin: 0; padding: 0; border: none;">
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p align="center">
                 <img src="figures/fig_5_cost_map.png" alt="Arc discretization motion tracking" width="100%">
                 <figcaption><b>Figure 5:</b> <i>Illustrates the cost map for a spline S(t).</i></figcaption>
