@@ -355,10 +355,31 @@ The spline with a heading with the lowest cost is set as the new base spline. Th
 
 The original A* path may have reached the goal pose while pushing up against a wall. If the final waypoint sets its heading to that of the final A* cell, the final spline too may end up squished against the wall. Final heading tuning is used to handle this. 
 
-### 5.4 ROS2 Package Design and Pipeline 
-Once dropout and final heading tuning is complete, the full spline path is reconstructed and sent back to `nav_node` from `spline_node` as the service response. 
+### 5.4 Driving the Path
+Once dropout and final heading tuning is complete, the full spline path is reconstructed and sent back to `nav_node` from `spline_node` as the service response. The `nav_node` then applies a trapezoidal motion profile with a PID feedback controller as illustrated in section 3.0. 
 
 ## 6.0 Results 
+This all culminates in a TurtleBot3 driving along adaptive splines to navigate to a set goal pose in the Gazebo-RViz Sim Environment. This is seen below.
+
+<p align="center">
+    <img src="figures/fig_14_test_1.png" style="width: 90%;">
+    <figcaption style="text-align: center;"><b>Figure 14:</b> <i>RViz2 screenshot of trajectory planning.</i></figcaption>
+</p>
+
+Shown in **Figure 14**, the robot began its navigation in the top right of the map and ended at the bottom left goal pose. The green path of grid cells represents the path taken. **The point clouds visualize how each spline was optimized.** Each colored arc was a spline considered and optimized. Fanned arcs that **are on** the ground show how each spline converged onto yellow splines from purple splines. 
+
+**Figure 14** also shows some optimized splines visualized as rising above the map in arcs. **Spline tuning that is projected in the Z-axis represent successful waypoint dropouts**. 
+
+It can be seen how the overall path initially intersected the map center. At the center, there was a sharp turn that was unnecessary. The dropout process removed these center waypoints and smoothed the path. This occurred four times in **Figure 14**. 
+
+Eventually, the dropout process began comparing top-right waypoints to bottom left ones. **A final path was found that circumvented the entire map center in one large smooth arc.** This final path followed the initial A* and initial splines, but was able to explore enough to discover a more optimal path that avoids obstacles and the map center.
+
+<p align="center">
+    <img src="figures/fig_15_test_2.gif" style="width: 100%;">
+    <figcaption style="text-align: center;"><b>Figure 15:</b> <i>RViz2 video of trajectory planning and driving.</i></figcaption>
+</p>
+
+
 
 ## 7.0 Conclusion
 
