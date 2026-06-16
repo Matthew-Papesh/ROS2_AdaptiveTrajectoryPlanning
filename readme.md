@@ -225,9 +225,12 @@ Now with an established cost function, this subsection analyzes the cost map and
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
-        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+        <td width="35%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                Now with an established cost function, this subsection analyzes the cost map and optimization process for tuning splines. This begins with viewing the cost map.
+                As seen in <b>Figure 5</b>, a cost map is generated for interpolating a spline between a set of obstacles. The surface represents the (k0,k1) k-space; the height the cost. The red plane has a slope in the direction of "best guess" global minimums; it is regressed from an initial sampling the the k-space. 
+            </p>
+            <p style="margin: 0; padding: 0; margin-bottom: 1rem">
+                This graph illustrates how the cost map is a non-convex surface. Considering the k-space maps to the cost surface continuously, splines fall into different homotopies base on if they travel over or under an obstacle. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
@@ -240,6 +243,7 @@ Now with an established cost function, this subsection analyzes the cost map and
     </tr>
 </table>
 
+Recalling **Figure 4**, a spline can transform by traversing the k-space; to test different combinations of **(k0,k1)**. If the obstacle in **Figure 4** travels over the obstacle, the only topological way to get that spline to travel under the obstacle instead is by traveling through it. This stands to reason the non-convex cost map will be riddled with steep ridges in the k-space where there are obstacle collisions. Then between these ridges, local minimum valleys will be difficult to distinguish from absolute minimums. Given this is what is observed in **Figure 5**, simulated annealing is the chosen optimizer algorithm when rooting the search at (k0,k1)=(0,0). 
 
 ### 4.5 Initial Tests 
 
