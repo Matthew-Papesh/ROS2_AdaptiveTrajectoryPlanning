@@ -130,7 +130,8 @@ Solving for quintic spline coefficients requires knowing variables: **x0, y0, θ
 
 ### 4.3 Defining the Cost Function
 A spline can be adaptive by avoiding obstacles in its environment. This requires quantifying spline overlap with a set of obstacles. Potential solutions for a spline are candidate splines with an optimal **(k0,k1)**. However, optimal splines must also minimize acceleration and arc length to ensure safe and controlled motion when driving. 
-
+ 
+ #### 4.3.1 Outlining the Cost Function 
 <p align="center">
     <img src="equations/eq_2_cost_function.png" style="width: 80%; height: 3rem">
     <figcaption style="text-align: center;"><b>Equation 2:</b> <i>Models the cost function J(S) for spline optimization.</i></figcaption>
@@ -147,19 +148,74 @@ The result is a linear combination of the sub-cost functions **f(S)** that evalu
                 However, the spline arc length and acceleration are approximated in <b>Equation 3</b>. Treating both as costs incentivize short and smoother splines when optimizing. These approximations hold because both terms in this approximate form, or exact form, will trend the same when minimizing cost. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                d2
+                <b>Equation 3</b> also shows obstacle avoidance cost is weighted much larger than arc length and acceleration costs. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p align="center">
                 <img src="equations/eq_3_cost_function_cont.png" alt="Arc discretization motion tracking" width="100%">
-                <figcaption><b>Equation 3:</b> <i>Models .</figcaption>
+                <figcaption><b>Equation 3:</b> <i>Models J(S) with sub-costs and hyper parameters.</figcaption>
             </p>
         </td>
     </tr>
 </table>
 
+This ensures no one sub-cost **f(S)** over powers the rest, but biases toward obstacle avoidance so the path avoids intersecting walls and obstacles. **This is the safety guarantee for our trajectory planner.** 
+
+#### 4.3.2 Outlining the Obstacle Cost 
+The sub section above outlines the cost function. This sub section describes in detail how obstacle sub cost is calculated. Obstacle cost requires measuring collision distance between the robot and each obstacle.  
+
+<table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p align="center">
+                <img src="equations/eq_4_obs_mtx.png" alt="Arc discretization motion tracking" width="100%">
+                <figcaption><b>Equation 4:</b> <i>Models MxN matrix D; permutes sets S and O to compute D.</i></figcaption>
+            </p>
+        </td>
+        <td width="4%" style="border: none;"></td>
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p style="margin: 0; padding: 0; margin-bottom: 1rem">
+                This starts with defining spline <b>S</b> and obstacle set <b>O</b> as matrices with shape Nx2 and Mx2 respectively. As seen in <b>Equation 4</b>, each row is a point in 2D space for both matrices <b>S</b> and <b>O</b>.  
+            </p>
+            <p style="margin: 0; padding: 0; margin-bottom: auto">
+                Also notated in <b>Equation 4</b>, matrix <b>D</b> with shape MxN represents the distance between all N spline points and M obstacles. The <b>D_ij</b> notates the element-wise calculation for distance across matrix <b>D</b>.
+            </p>
+        </td>
+    </tr>
+</table>
+
+From this distance matrix **D**, distances below a threshold are considered collisions. This is best notated by a radial threshold from each obstacle in matrix **O**. As a result, the cost function punishment scales with how much of the spline overlaps with obstacles. 
+
+<p align="center">
+    <img src="equations/eq_5_act_function.png" style="width: 90%;">
+    <figcaption style="text-align: center;"><b>Equation 5:</b> <i>Models the obstacle cost activation function.</i></figcaption>
+</p>
+
+To achieve this radial filtering, matrix **D** is passed into the activation function modeled in **Equation 5**. The activation function is an element-wise operation onto each element **D_ij**. This function is the product of a sigmoid step function and inverse distance function. 
+
+The sigmoid serves as a steep continuous step function that collapses to zero for all distances **D_ij** greater than **r_thresh**. The sigmoid converges to one for distances below the threshold. This sigmoid is multiplied by a clamped inverse distance cost, as seen in **Equation 5**. The inverse distance is maximized at **D_ij=0** with max output **c_max**. Between the sigmoid and inverse distance, the result is decaying costs for larger distances such that cost collapses to zero beyond a threshold radius.   
+
+<table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p style="margin: 0; padding: 0; margin-bottom: 1rem">
+                d1
+            </p>
+            <p style="margin: 0; padding: 0; margin-bottom: auto">
+                d2
+            </p>
+        </td>
+        <td width="4%" style="border: none;"></td>
+        <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <p align="center">
+                <img src="equations/eq_6_obs_cost.png" alt="Arc discretization motion tracking" width="100%">
+                <figcaption><b>Equation 6:</b> <i>Models .</i></figcaption>
+            </p>
+        </td>
+    </tr>
+</table>
 
 ### 4.4 Optimizing Splines with Simulated Annealing 
 ### 4.5 Initial Tests 
