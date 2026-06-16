@@ -139,7 +139,7 @@ A spline can be adaptive by avoiding obstacles in its environment. This requires
 
 The cost function in **Equation 2** is a linear combination of sub-costs for arc length, acceleration, and obstacle overlap. Each sub-cost term **f(S)** is tuned by a corresponding scalar weight. Each sub-cost term **f(S)** returns an **Nx1** vector of costs calculated at each **N** points interpolated along the spline. The sub-cost linear combination is summed and transformed against a ones row vector with shape **1xN**.
 
-The result is a linear combination of the sub-cost functions **f(S)** that evaluates cost at every point along the spline. The row costs are then summed as a final cost for **J(S)**.
+The result is a vector that evaluates cost at every point along the spline. The row costs are then summed as a final scalar cost for **J(S)**.
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -214,7 +214,7 @@ The sigmoid serves as a steep continuous step function that collapses to zero fo
     </tr>
 </table>
 
-Multiplying the activation function by the upper-triangular matrix yields another MxN matrix. Each column represents a single point of N points along the spline **S**. Each row represents the sub-cost contributed by each M obstacles from set **O**. The cumulative summation carries past obstacle costs from previous columns into later columns. This forces obstacle costs to compound if a spline clips through a wall while punishing harder for earlier collisions on the path. As a result, later points along a path "remember" past collisions and act as a deterrent against greedy bias during optimization. 
+Multiplying the activation function by the upper-triangular matrix yields another MxN matrix. Each column represents a single point of N points along the spline **S**. Each row represents the sub-cost contributed by each M obstacles from set **O**. The cumulative summation carries past obstacle costs from previous columns into later columns. This forces obstacle costs to compound if a spline clips through a wall while punishing harder for earlier collisions on the path. **As a result, later points along a path "remember" past collisions and act as a deterrent against greedy bias during optimization.** 
 
 A final transpose and transformation against a Mx1 ones vector sums all compounded obstacle cost at each point along the path. The result is a sub-cost vector for obstacle cost that is denoted in **Equation 6**. 
 
