@@ -246,7 +246,7 @@ Now with an established cost function, this subsection analyzes the cost map and
 Recalling **Figure 4**, the stationary spline can transform by traversing the k-space; to test different combinations of **(k0,k1)**. If the spline in **Figure 4** travels over the obstacle, the only topological way to get that spline to travel under the obstacle instead is by traveling through it in the k-space. This stands to reason that the non-convex cost map will be riddled with steep ridges in the k-space where there are obstacle collisions in the c-space. Then between these ridges, local minimum valleys will be difficult to distinguish from absolute minimums. Given this is what is observed in **Figure 5**, simulated annealing is the chosen optimizer algorithm when seeding the search at (k0,k1)=(0,0). 
 
 ### 4.5 Initial Tests 
-The last couple subsections defined a cost function and an optimizer to minimize that cost by choosing an optimal **(k0,k1)** from the k-space. Before testing in a Gazebo-RViz environment, this apparatus is tested below. 
+The last couple of subsections defined a cost function and an optimizer to minimize that cost by choosing an optimal **(k0,k1)** from the k-space. Before testing in a Gazebo-RViz environment, this apparatus is tested below. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -276,11 +276,11 @@ The last couple subsections defined a cost function and an optimizer to minimize
     <figcaption style="text-align: center"><b>Figures 6-9:</b> <i>Illustrates spline adaptation to environment with simulated annealing.</i></figcaption>
 </div><br>
 
-As seen in **Figures 6-9**, the simulated annealing optimizer is tasked with traversing the k-space to find optimal **(k0,k1)** that minimizes our cost function. Red circles [although stretched with x/y window scaling] represent obstacles belong to set **O**. Points along the spline when discretized belong to set **S**. During training, **(k0,k1)** curvature is set, spline coefficients calculated analytically, spline interpolated, and then the cost is computed. This repeats for every epoch trained in the k-space. **This is highly expedited by implementing the cost function and spline coefficients with NumPy operator broadcasting**. 
+As seen in **Figures 6-9**, the simulated annealing optimizer is tasked with traversing the k-space to find optimal **(k0,k1)**. Red circles represent obstacles belonging to set **O**. Points along the spline, when discretized, belong to set **S**. During training, the **(k0, k1)** curvature is set, spline coefficients are calculated analytically, the spline is interpolated, and then the cost is computed. This repeats for every epoch trained in the k-space. **This is highly expedited by implementing the cost function and spline coefficients with NumPy operator broadcasting**. Earlier epochs show splines drawn in purple, and more tuned later epochs show splines converging with a yellow color. 
 
-Now, the black line is found spline once optimization is completed. Viewing tests A and B, the initial and final waypoints and poses are the same. **Test A shows** how the spline completes a round-about the walls of obstacles. **Test B shows** how the earlier epochs [in purple] explore to possible openings in the wall of obstacles; the spline chooses the one that minimizes its arc length in later epochs [in yellow]. This is solidified in the final black spline. 
+Viewing tests A and B, the initial and final waypoints and poses are the same. **Test A shows** how the spline completes a round-about the walls of obstacles. **Test B shows** how the earlier epochs explore possible openings in the wall of obstacles; the spline chooses the one that minimizes its arc length in later epochs. This is solidified in the final black spline. 
 
-Additionally, **test C shows** how changing the final waypoint's pose to being placed further south still results in the optimizer finding an optimal spline. **Test D also shows** this by exploring both openings to its final pose, and choosing the more north opening that minimizes arc length and curvature.  
+Additionally, **Test C shows** how changing the final waypoint's pose to being placed further south still results in the optimizer finding an optimal spline. **Test D also shows** this by exploring both openings to its final pose, and choosing the more northern opening that minimizes arc length and curvature.  
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -299,13 +299,13 @@ Additionally, **test C shows** how changing the final waypoint's pose to being p
     <figcaption style="text-align: center"><b>Figures 10-11:</b> <i>Illustrates the leaky obstacles problem.</i></figcaption>
 </div><br>
 
-However, although the optimizer converges well on splines that adapt to their environment, there are edge cases. The biggest is the **leaky obstacle problem**. As seen in **Figures 10-11**, an obstacle can leave a slight opening demonstrated in **test E**. It is possible that the optimal spline in test E is practical. 
+However, although the optimizer converges well on splines that adapt to their environment, there are edge cases. The biggest is the **leaky obstacle problem**. As seen in **Figures 10-11**, an obstacle can leave a slight opening, demonstrated in **test E**. The optimal spline in test E may be impractical. 
 
-But, if the obstacles are modeled based on the c-space, the obstacle radius cannot make obstacles tangent at there perimeters. It is possible for the optimizer to find solutions that squeeze between c-space occupied cells similarly to in test E. However, once this leaky crevice is patched in **test F**, the optimizer correctly finds the truly optimal spline. 
+But, if the obstacles are modeled based on the c-space, the obstacle radius cannot make obstacles tangent at their perimeters. The optimizer can find solutions that squeeze between c-space occupied cells similarly to in test E. However, once this leaky crevice is patched in **test F**, the optimizer correctly finds the truly optimal spline. 
 
-This exercise is reason why the obstacle radius is 1.5 times that of the map cell resolution. Because, when occupied cells are mapped as obstacles, this radius force obstacle regions to overlap and plug any leaks in the cost map. 
+This exercise is the reason why the obstacle radius is 1.5 times that of the map cell resolution. Because when occupied cells are mapped as obstacles, this radius forces obstacle regions to overlap and plug any leaks in the cost map. 
 
-Lastly, recalling section 4.4, the number of ridges on the cost can scale exponentially based on the number of homotopy classes for splines. The number of classes can be minimized for large sets of obstacles by plugging these leaks. 
+Lastly, recalling section 4.4, the number of ridges on the cost can scale exponentially with the number of homotopy classes of splines. The number of classes can be minimized for large sets of obstacles by plugging these leaks. 
 
 ## 5.0 Trajectory Planning Package Pipeline
 
