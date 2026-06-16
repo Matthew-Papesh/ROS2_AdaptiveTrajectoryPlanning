@@ -227,10 +227,10 @@ Now with an established cost function, this subsection analyzes the cost map and
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="35%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                As seen in <b>Figure 5</b>, a cost map is generated for interpolating a spline between a set of obstacles. The surface represents the (k0,k1) k-space; the height the cost. The red plane has a slope in the direction of "best guess" global minimums; it is regressed from an initial sampling from the k-space. 
+                As seen in <b>Figure 5</b>, a cost map is generated for interpolating a spline between a set of obstacles. The surface represents the (k0,k1) k-space; the height the cost. The red plane has a slope in the direction of "best guess" global minimums; it is regressed from an initial sampling of the k-space. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                This graph illustrates how the cost map is a non-convex surface. Considering the k-space maps to the cost surface continuously, splines fall into different homotopy classes based on if they travel over or under an obstacle. <b>Class count scales exponentially with more obstacles to travel around.</b> 
+                This graph illustrates how the cost map is a non-convex surface. Considering the k-space maps to the cost surface continuously, splines fall into different homotopy classes based on whether they travel over or under an obstacle. <b>Class count scales exponentially with more obstacles to travel around.</b> 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
@@ -243,7 +243,7 @@ Now with an established cost function, this subsection analyzes the cost map and
     </tr>
 </table>
 
-Recalling **Figure 4**, the stationary spline can transform by traversing the k-space; to test different combinations of **(k0,k1)**. If the spline in **Figure 4** travels over the obstacle, the only topological way to get that spline to travel under the obstacle instead is by traveling through it in the k-space. This stands to reason the non-convex cost map will be riddled with steep ridges in the k-space where there are obstacle collisions in the c-space. Then between these ridges, local minimum valleys will be difficult to distinguish from absolute minimums. Given this is what is observed in **Figure 5**, simulated annealing is the chosen optimizer algorithm when seeding the search at (k0,k1)=(0,0). 
+Recalling **Figure 4**, the stationary spline can transform by traversing the k-space; to test different combinations of **(k0,k1)**. If the spline in **Figure 4** travels over the obstacle, the only topological way to get that spline to travel under the obstacle instead is by traveling through it in the k-space. This stands to reason that the non-convex cost map will be riddled with steep ridges in the k-space where there are obstacle collisions in the c-space. Then between these ridges, local minimum valleys will be difficult to distinguish from absolute minimums. Given this is what is observed in **Figure 5**, simulated annealing is the chosen optimizer algorithm when seeding the search at (k0,k1)=(0,0). 
 
 ### 4.5 Initial Tests 
 
