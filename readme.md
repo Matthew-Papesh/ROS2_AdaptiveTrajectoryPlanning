@@ -139,7 +139,7 @@ A spline can be adaptive by avoiding obstacles in its environment. This requires
 
 The cost function in **Equation 2** is a linear combination of sub-costs for arc length, acceleration, and obstacle overlap. Each sub-cost term **f(S)** is tuned by a corresponding scalar weight. Each sub-cost term **f(S)** returns an **Nx1** vector of costs calculated at each **N** points interpolated along the spline. The sub-cost linear combination is summed and transformed against a ones row vector with shape **1xN**.
 
-The result is a vector that evaluates cost at every point along the spline. The row costs are then summed as a final scalar cost for **J(S)**.
+The result is a final scalar cost for **J(S)**.
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
