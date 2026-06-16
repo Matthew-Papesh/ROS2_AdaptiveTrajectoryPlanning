@@ -276,7 +276,7 @@ The last couple of subsections defined a cost function and an optimizer to minim
     <figcaption style="text-align: center"><b>Figures 6-9:</b> <i>Illustrates spline adaptation to environment with simulated annealing.</i></figcaption>
 </div><br>
 
-As seen in **Figures 6-9**, the simulated annealing optimizer is tasked with traversing the k-space to find optimal **(k0,k1)**. Red circles represent obstacles belonging to set **O**. Points along the spline, when discretized, belong to set **S**. During training, the **(k0, k1)** curvature is set, spline coefficients are calculated analytically, the spline is interpolated, and then the cost is computed. This repeats for every epoch trained in the k-space. **This is highly expedited by implementing the cost function and spline coefficients with NumPy operator broadcasting**. Earlier epochs show splines drawn in purple, and more tuned later epochs show splines converging with a yellow color. 
+As seen in **Figures 6-9**, the simulated annealing optimizer is tasked with traversing the k-space to find optimal **(k0,k1)**. Red circles represent obstacles belonging to set **O**. Points along the spline, when discretized, belong to set **S**. During training, the **(k0, k1)** curvature is set, spline coefficients are calculated analytically, the spline is interpolated, and then the cost is computed. This repeats for every epoch computed in the k-space. **This is highly expedited by implementing the cost function and spline coefficients with NumPy operator broadcasting**. Earlier epochs show splines drawn in purple, and more tuned later epochs show splines converging with a yellow color. 
 
 Viewing tests A and B, the initial and final waypoints and poses are the same. **Test A shows** how the spline completes a round-about the walls of obstacles. **Test B shows** how the earlier epochs explore possible openings in the wall of obstacles; the spline chooses the one that minimizes its arc length in later epochs. This is solidified in the final black spline. 
 
@@ -305,7 +305,7 @@ But, if the obstacles are modeled based on the c-space, the obstacle radius cann
 
 This exercise is the reason why the obstacle radius is 1.5 times that of the map cell resolution. Because when occupied cells are mapped as obstacles, this radius forces obstacle regions to overlap and plug any leaks in the cost map. 
 
-Lastly, recalling section 4.4, the number of ridges on the cost can scale exponentially with the number of homotopy classes of splines. The number of classes can be minimized for large sets of obstacles by plugging these leaks. 
+Lastly, recalling section 4.4, the number of ridges on the cost can scale exponentially with the number of homotopy classes of splines. **The number of classes, and convergence time, can be minimized for large sets of obstacles by plugging these leaks.** 
 
 ## 5.0 Trajectory Planning Package Pipeline
 
