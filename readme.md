@@ -17,7 +17,7 @@ Our robot creates paths to follow from quintic spline polynomials. Splines creat
                 Splines take on several shapes and forms based on their curvature and the waypoints they interpolate. The A* search provides potential waypoints. But waypoints must be selectively chosen. As seen in <b>Figure 1</b>, a raw path is created from points connected by a dashed line, where the spline interpolates a subset of those points. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                This becomes a balancing act. In our case, the A* path is the dashed line. Fewer waypoints means the spline path is smoother and can have larger maneuvers. But, it may be unclear what shape that spline takes on, and if it risks colliding with an obstacle. Conversely, using more waypoints constrains the spline onto the A* path that will ensure it does not collide with obstacles. 
+                This becomes a balancing act. In our case, the A* path is the dashed line. Fewer waypoints means the spline path is smoother and can have larger maneuvers. But it may be unclear what shape that spline takes on, and if it risks colliding with an obstacle. Conversely, using more waypoints constrains the spline onto the A* path that will ensure it does not collide with obstacles. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
@@ -91,10 +91,10 @@ The second half of motion is the feedback loop. Our robot uses a lateral PID con
 Then, the motion profile computes wheel speeds for each point along the path before caching them. The closest unvisited point along the path both dictates what base speed is pulled from the cache in addition to the differential speed offset for drift correction. Together, the robot successfully followed spline paths.
 
 ## 4.0 Intelligent and Adaptive Splines 
-The remainder of this document covers the custom approach to adaptive spline planning. This section covers how splines can act as intelligent agents that adapt to avoid obstacles in the environment. **This is the central contribution of this project**. All work is implemented with Numpy. 
+The remainder of this document covers the custom approach to adaptive spline planning. This section covers how splines can act as intelligent agents that adapt to avoid obstacles in the environment. **This is the central contribution of this project**. All work is implemented with NumPy. 
 
 ### 4.1 Quintic Splines  
-Each path is made up of parametric quintic polynomials based on an input **t** with domain of [0,1]. This function maps **t** → **(x,y)**. A path is a set of poses **(x,y,θ)**. A single spline interpolates between one pose to the next. If spline **S** interpolates from pose **P** to pose **P`**, then functions **x(t)** and **y(t)** take the form: 
+Each path is made up of parametric quintic polynomials based on an input **t** with domain [0,1]. This function maps **t** → **(x,y)**. A path is a set of poses **(x,y,θ)**. A single spline interpolates between one pose to the next. If spline **S** interpolates from pose **P** to pose **P`**, then functions **x(t)** and **y(t)** take the form: 
 
 <p align="center">
     <img src="equations/eq_1_quintic.png" style="width: 50%">
@@ -137,18 +137,18 @@ A spline can be adaptive by avoiding obstacles in its environment. This requires
     <figcaption style="text-align: center;"><b>Equation 2:</b> <i>Models the cost function J(S) for spline optimization.</i></figcaption>
 </p>
 
-The cost function in **Equation 2** is a linear combination of sub-costs for arc length, acceleration, and obstacle overlap. Each sub-cost term **f(S)** is tuned by a corresponding scalar weight. Each sub-cost term **f(S)** returns a **Nx1** vector of costs calculated at each **N** points interpolated along the spline. The sub-cost linear combination is summed and transforms against ones row vector with shape **1xN**.
+The cost function in **Equation 2** is a linear combination of sub-costs for arc length, acceleration, and obstacle overlap. Each sub-cost term **f(S)** is tuned by a corresponding scalar weight. Each sub-cost term **f(S)** returns an **Nx1** vector of costs calculated at each **N** points interpolated along the spline. The sub-cost linear combination is summed and transformed against a ones row vector with shape **1xN**.
 
-The result is a linear combination of the sub-cost functions **f(S)** that evaluates cost at every point along the spline. The rows costs are then summed as a final cost for **J(S)**.
+The result is a linear combination of the sub-cost functions **f(S)** that evaluates cost at every point along the spline. The row costs are then summed as a final cost for **J(S)**.
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                However, the spline arc length and acceleration are approximated in <b>Equation 3</b>. Treating both as costs incentivize short and smoother splines when optimizing. These approximations hold because both terms in this approximate form, or exact form, will trend the same when minimizing cost. 
+                However, the spline arc length and acceleration are approximated in <b>Equation 3</b>. Treating both as costs incentivizes short and smoother splines when optimizing. These approximations hold because both terms in this approximate form, or exact form, will trend the same when minimizing cost. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                <b>Equation 3</b> also shows obstacle avoidance cost is weighted much larger than arc length and acceleration costs. 
+                <b>Equation 3</b> also shows that obstacle avoidance cost is weighted much higher than arc length and acceleration costs. 
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
@@ -161,10 +161,10 @@ The result is a linear combination of the sub-cost functions **f(S)** that evalu
     </tr>
 </table>
 
-This ensures no one sub-cost **f(S)** over powers the rest, but biases toward obstacle avoidance so the path avoids intersecting walls and obstacles. **This is the safety guarantee for our trajectory planner.** 
+This ensures no one sub-cost **f(S)** overpowers the rest, but biases toward obstacle avoidance so the path avoids intersecting walls and obstacles. **This is the safety guarantee for our trajectory planner.** 
 
 #### 4.3.2 Outlining the Obstacle Cost 
-The sub section above outlines the cost function. This sub section describes in detail how obstacle sub cost is calculated. Obstacle cost requires measuring collision distance between the robot and each obstacle.  
+The subsection above outlines the cost function. This subsection describes in detail how the obstacle sub cost is calculated. Obstacle cost requires measuring the collision distance between the robot and each obstacle.  
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -177,7 +177,7 @@ The sub section above outlines the cost function. This sub section describes in 
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                This starts with defining spline <b>S</b> and obstacle set <b>O</b> as matrices with shape Nx2 and Mx2 respectively. As seen in <b>Equation 4</b>, each row is a point in 2D space for both matrices <b>S</b> and <b>O</b>.  
+                This starts with defining spline <b>S</b> and obstacle set <b>O</b> as matrices with shape Nx2 and Mx2, respectively. As seen in <b>Equation 4</b>, each row is a point in 2D space for both matrices <b>S</b> and <b>O</b>.  
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
                 Also notated in <b>Equation 4</b>, matrix <b>D</b> with shape MxN represents the distance between all N spline points and M obstacles. The <b>D_ij</b> notates the element-wise calculation for distance across matrix <b>D</b>.
@@ -193,7 +193,7 @@ From this distance matrix **D**, distances below a threshold are considered coll
     <figcaption style="text-align: center;"><b>Equation 5:</b> <i>Models the obstacle cost activation function.</i></figcaption>
 </p>
 
-To achieve this radial filtering, matrix **D** is passed into the activation function modeled in **Equation 5**. The activation function is an element-wise operation onto each element **D_ij**. This function is the product of a sigmoid step function and inverse distance function. 
+To achieve this radial filtering, matrix **D** is passed into the activation function modeled in **Equation 5**. The activation function is an element-wise operation on each element **D_ij**. This function is the product of a sigmoid step function and inverse distance function. 
 
 The sigmoid serves as a steep continuous step function that collapses to zero for all distances **D_ij** greater than **r_thresh**. The sigmoid converges to one for distances below the threshold. This sigmoid is multiplied by a clamped inverse distance cost, as seen in **Equation 5**. The inverse distance is maximized at **D_ij=0** with max output **c_max**. Between the sigmoid and inverse distance, the result is decaying costs for larger distances such that cost collapses to zero beyond a threshold radius.   
 
@@ -214,7 +214,7 @@ The sigmoid serves as a steep continuous step function that collapses to zero fo
     </tr>
 </table>
 
-Multiplying the activation function by the upper-triangular yields another MxN matrix. Each column represents a single point of N points along the spline **S**. Each row represents the sub-cost contributed by each M obstacles from set **O**. The cumulative summation carries past obstacle costs from previous columns into later columns. This forces obstacle force to compound if a spline clips through a wall while punishing harder for earlier collisions than later ones along the path. As a result, later points along a path "remember" past collisions that deter greedy bias during optimization. 
+Multiplying the activation function by the upper-triangular matrix yields another MxN matrix. Each column represents a single point of N points along the spline **S**. Each row represents the sub-cost contributed by each M obstacles from set **O**. The cumulative summation carries past obstacle costs from previous columns into later columns. This forces obstacle force to compound if a spline clips through a wall while punishing harder for earlier collisions than later ones along the path. As a result, later points along a path "remember" past collisions that deter greedy bias during optimization. 
 
 A final transpose and transformation against a Mx1 ones vector sums all compounded obstacle cost at each point along the path. The result is a sub-cost vector for obstacle cost that is denoted in **Equation 6**. 
 
