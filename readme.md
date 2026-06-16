@@ -368,7 +368,7 @@ This all culminates in a TurtleBot3 driving along adaptive splines to navigate t
 
 Shown in **Figure 14**, the robot began its navigation in the top right of the map and ended at the bottom left goal pose. The green path of grid cells represents the path taken. **The point clouds visualize how each spline was optimized.** Each colored arc was a spline considered and optimized. Fanned arcs that **are on** the ground show how each spline converged onto yellow splines from purple splines. 
 
-**Figure 14** also shows some optimized splines visualized as rising above the map in arcs. **Spline tuning that is projected in the Z-axis represents successful waypoint dropouts**. 
+**Figure 14** also shows how some optimized splines are visualized as rising above the map in arcs. **Spline tuning that is projected in the Z-axis represents successful waypoint dropouts**. 
 
 It can be seen how the overall path initially intersected the map center. At the center, there was a sharp turn that was unnecessary. The dropout process removed these center waypoints and smoothed the path. This occurred four times in **Figure 14**. 
 
