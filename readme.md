@@ -250,23 +250,43 @@ Recalling **Figure 4**, the stationary spline can transform by traversing the k-
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <figcaption style="text-align: center"><b><i>Optimizer Test A</i></b></figcaption>
             <img src="figures/fig_6_sim_anneal.png">
         </td>
         <td width="2%" style="border: none;"></td>
         <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <figcaption style="text-align: center"><b><i>Optimizer Test B</i></b></figcaption>
             <img src="figures/fig_7_sim_anneal.png">
         </td>
     </tr>
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <figcaption style="text-align: center"><b><i>Optimizer Test C</i></b></figcaption>
             <img src="figures/fig_8_sim_anneal.png">
         </td>
         <td width="2%" style="border: none;"></td>
         <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <figcaption style="text-align: center"><b><i>Optimizer Test D</i></b></figcaption>
             <img src="figures/fig_9_sim_anneal.png">
         </td>
     </tr>
+</table><br>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
+    <tr style="margin: 0; padding: 0; border: none;">
+        <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <figcaption style="text-align: center"><b><i>Optimizer Test E</i></b></figcaption>
+            <img src="figures/fig_10_sim_anneal_leak.png">
+        </td>
+        <td width="2%" style="border: none;"></td>
+        <td width="36%" valign="top" style="margin: 0; padding: 0; border: none;">
+            <figcaption style="text-align: center"><b><i>Optimizer Test F</i></b></figcaption>
+            <img src="figures/fig_11_sim_anneal_plug.png">
+        </td>
+    </tr>
 </table>
+
 
 ## 5.0 Trajectory Planning Package Pipeline
 
