@@ -71,10 +71,9 @@ class SplinePath(Node):
     class OptMode(Enum):
         IDLE = 0 
         INITIAL_TRAINING = 1 # trains for the initial set of waypoints
-        DROPOUT_TRAINING = 2 # removes unecessary waypoints with training
+        DROPOUT_TRAINING = 2 # removes unnecessary waypoints with training
         HEADING_TRAINING = 3 # trains the final waypoint heading
         
-
     def map_callback(self, msg: OccupancyGrid):
         """
         Callback function for the obstacle map listener
