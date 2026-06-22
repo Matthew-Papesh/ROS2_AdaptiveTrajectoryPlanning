@@ -107,7 +107,7 @@ Both functions' coefficients are solved for with a time-parameter matrix as the 
 The spline exploration-to-safety bottleneck mentioned before is an optimization problem. Chord parametrization was applied to each spline
 such that the initial and final curvature were independently weighted as **k0** and **k1** respectively. Obstacle avoidance was quantified in a cost function in terms of the spline curvature **k0** and **k1**. These parameters can then be tuned by exploring and descending the cost map. 
 
-Solving for quintic spline coefficients requires knowing variables: **x0, y0, θ0, x1, y1, θ1, k0,** and **k1**. The first six are provided by the two poses the spline interpolates. The **k0** and **k1** are independent curvature constants to be set separately. **k0 and k1 are denoted as the 2D k-space**.  
+Solving for a chord-parametrized quintic spline's coefficients requires knowing variables: **x0, y0, θ0, x1, y1, θ1, k0,** and **k1**. The first six are provided by the two poses the spline interpolates. The **k0** and **k1** are independent curvature constants to be set separately. **k0 and k1 are denoted as the 2D k-space**.  
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
