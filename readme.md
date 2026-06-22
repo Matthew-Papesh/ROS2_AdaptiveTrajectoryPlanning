@@ -104,7 +104,8 @@ Each path is made up of parametric quintic polynomials based on an input **t** w
 Both functions' coefficients are solved for with a time-parameter matrix as the Boundary Value Problem. The result is a spline **S(t) = (x(t), y(t))**, and its first and second derivatives, computed via Horner's method. This is implemented in the `Quintic` class in `quintic.py`. Finally, our robot computes splines relatively between poses. 
 
 ### 4.2 Cost-Optimization Problem and the K-Space
-The spline exploration-to-safety bottleneck mentioned before is an optimization problem. Obstacle avoidance can be quantified in a cost metric in terms of spline parameters. These parameters then can be tuned by descending the cost map. 
+The spline exploration-to-safety bottleneck mentioned before is an optimization problem. Chord parametrization was applied to each spline
+such that the initial and final curvature were independently weighted as **k0** and **k1** respectively. Obstacle avoidance was quantified in a cost function in terms of the spline curvature **k01** and **k1**. These parameters can then be tuned by exploring and descending the cost map. 
 
 Solving for quintic spline coefficients requires knowing variables: **x0, y0, θ0, x1, y1, θ1, k0,** and **k1**. The first six are provided by the two poses the spline interpolates. The **k0** and **k1** are independent curvature constants to be set separately. **k0 and k1 are denoted as the 2D k-space**.  
 
