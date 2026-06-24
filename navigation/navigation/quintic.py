@@ -10,7 +10,7 @@ import math
 import numpy as np
 import csv
 
-# Represents the relative quintic function to compute subpoints from 
+# Represents the relative quintic function to compute sub-points from 
 class Quintic:
     """
     Represents the relative quintic function to compute given a specified starting and ending waypoint. 
@@ -85,7 +85,7 @@ class Quintic:
             elif isinstance(waypoint, tuple):
                 return waypoint[0], waypoint[1], waypoint[2]
 
-        # intiialize waypoints and k-space constants 
+        # initialize waypoints and k-space constants 
         x_0, y_0, t_0 = init_waypoint(self.waypoint_0)
         x_1, y_1, t_1 = init_waypoint(self.waypoint_1)
         k_0, k_1 = self.k_0, self.k_1
@@ -230,6 +230,15 @@ class Quintic:
         return sub_costs.sum(axis=0), tf_x, tf_y
     
     def query_cost_map(self, axis_partitions: int, k0_range: tuple[float, float], k1_range: tuple[float, float], export_file: str=None) -> dict:
+        """
+        Calculates the cost map surface of this quintic spline. This surface maps the (k0,k1) surface (k-space) to its cost. 
+        This is an intensive process. Data can be exported to a CSV file. 
+        :param axis_partitions [int] The step size to discretize the cost map surface
+        :param k0_range [tuple[float, float]] Specifies a tuple for k0 min max range. 
+        :param k1_range [tuple[float, float]] Specified a tuple for k1 min max range. 
+        :param export_file [str] Optionally specifies a CSV file to export the cost map surface to. 
+        :returns A the cost map dictionary such that (k0,k1) tuple is the key to corresponding cost 
+        """
         kd0 = (k0_range[1]-k0_range[0]) / float(axis_partitions)
         kd1 = (k1_range[1]-k1_range[0]) / float(axis_partitions)
         curr_k0, curr_k1 = self.k_0, self.k_1
@@ -271,6 +280,12 @@ class Quintic:
         return query
 
     def import_query_cost_map(self, import_file: str):
+        """
+        Memoizes (caches) a CSV file for visualizing the cost map surface via `self.show_cost_map()`. 
+        CSV records take the form of: <k0>, <k1>, <cost>. 
+        Visualizing is an intensive process; data can be saved to a CSV and imported later. 
+        :param import_file [str] The specified file location to import. 
+        """
         with open(import_file, mode='r', newline='') as file:
             self.cost_query.clear()
             file_reader = csv.reader(file)
@@ -289,6 +304,10 @@ class Quintic:
         return self.cost_query
 
     def show_cost_map(self, show_cost_trend: bool=False): 
+        """
+        Visualizes the cost map surface from the (k0,k1) plane (k-space) while projecting the cost orthogonally. This is done with matplotlib. 
+        :param show_cost_trend [bool] Toggles if the global cost trend plane is visualized. 
+        """
         if self.cost_query is None or not self.cost_query:
             return 
         k_keys = np.array(list(self.cost_query.keys()))
@@ -327,6 +346,17 @@ class Quintic:
         plt.show()
 
     def get_cost_trend_surface(self, in_ring_radius: float=3.0, out_ring_radius: float=7.0, origin_radius: float=2.0, n_ring:int=50, n_origin: int=5):
+        """
+        Samples global geometry of the cost map surface associated with this quintic spline. Retrieves a global trending slope and the lowest point (k0,k1,cost) discovered.
+        This slope is the coefficients of a planar regression of the sampled points.  
+        Sampling happens at the (k0,k1)=(0,0) origin, and at a inner and outer radius specified. 
+        :param in_ring_radius [float] The outer radius to sample ring points 
+        :param out_ring_radius [float] The inner radius to sample ring points
+        :param origin_radius [float] The max radius to sample origin points within
+        :param n_ring [int] Sample size between inner and outer rings
+        :param n_origin [int] Origin sample size
+        :returns A 4D tuple of a regression plane coefficients, the k0, k1, and cost found at the lowest cost sampled. 
+        """
         rng = np.random.default_rng() # init rng
         # deterministic macro-horizon arrays avoids 0 and 2pi duplication
         thetas = np.linspace(0.0, 2.0*math.pi, int(n_ring/2), endpoint=False)
