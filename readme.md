@@ -136,7 +136,7 @@ A spline can be adaptive by avoiding obstacles in its environment. This requires
 <p align="center">
     <img src="equations/eq_2_cost_function.png" style="width: 80%; height: 3rem">
     <figcaption style="text-align: center;"><b>Equation 2:</b> <i>Models the cost function J(S) for spline optimization.</i></figcaption>
-</p>
+</p> 
 
 The cost function in **Equation 2** is a linear combination of sub-costs for arc length, acceleration, and obstacle overlap. Each sub-cost term **f(S)** is tuned by a corresponding scalar weight. Each sub-cost term **f(S)** returns an **Nx1** vector of costs calculated at each **N** points interpolated along the spline. The sub-cost linear combination is summed and transformed against a ones row vector with shape **1xN**.
 
@@ -228,7 +228,7 @@ Now with an established cost function, this subsection analyzes the cost map and
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="35%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                As seen in <b>Figure 5</b>, a cost map is generated for interpolating a spline between a set of obstacles. The surface represents the (k0,k1) k-space; the height the cost. The red plane has a slope in the direction of "best guess" global minimums; it is regressed from an initial sampling of the k-space. 
+                As seen in <b>Figure 5</b>, a cost map is generated for interpolating a spline between a set of obstacles. The surface represents the <b>(k0,k1)</b> k-space; the height the cost. The red plane has a slope in the direction of "best guess" global minimums; it is regressed from an initial sampling of the k-space. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
                 This graph illustrates how the cost map is a non-convex surface. Considering the k-space maps to the cost surface continuously, splines fall into different homotopy classes based on whether they travel over or under an obstacle. <b>Class count scales exponentially with more obstacles to travel around.</b> 
@@ -244,7 +244,7 @@ Now with an established cost function, this subsection analyzes the cost map and
     </tr>
 </table>
 
-Recalling **Figure 4**, the stationary spline can be transformed by traversing the k-space to test different combinations of **(k0,k1)**. If the spline in **Figure 4** travels over the obstacle, the only topological way to get that spline to travel under the obstacle instead is by traveling through it in the k-space. This stands to reason that the non-convex cost map will be riddled with steep ridges in the k-space where there are obstacle collisions in the c-space. Then between these ridges, local minimum valleys will be difficult to distinguish from absolute minimums. Given this is what is observed in **Figure 5**, simulated annealing is the chosen optimizer algorithm when seeding the search at (k0,k1)=(0,0). 
+Recalling **Figure 4**, the stationary spline can be transformed by traversing the k-space to test different combinations of **(k0,k1)**. If the spline in **Figure 4** travels over the obstacle, the only topological way to get that spline to travel under the obstacle instead is by traveling through it in the k-space. This stands to reason that the non-convex cost map will be riddled with steep ridges in the k-space where there are obstacle collisions in the c-space. Then between these ridges, local minimum valleys will be difficult to distinguish from absolute minimums. Given this is what is observed in **Figure 5**, simulated annealing is the chosen optimizer algorithm when seeding the search at **(k0,k1)**=(0,0). 
 
 ### 4.5 Initial Tests 
 The last couple of subsections defined a cost function and an optimizer to minimize that cost by choosing an optimal **(k0,k1)** from the k-space. Before testing in a Gazebo-RViz environment, this apparatus is tested below. 
@@ -300,9 +300,9 @@ Additionally, **Test C shows** how changing the final waypoint's pose to being p
     <figcaption style="text-align: center"><b>Figures 10-11:</b> <i>Illustrates the leaky obstacles problem.</i></figcaption>
 </div><br>
 
-However, although the optimizer converges well on splines that adapt to their environment, there are edge cases. The biggest is the **leaky obstacle problem**. As seen in **Figures 10-11**, an obstacle can leave a slight opening, demonstrated in **Test E**. The optimal spline in test E may be impractical. 
+However, although the optimizer converges well on splines that adapt to their environment, there are edge cases. The biggest is the **leaky obstacle problem**. As seen in **Figures 10-11**, an obstacle can leave a slight opening, demonstrated in **Test E**. The optimal spline in **Test E** may be impractical. 
 
-But if the obstacles are modeled based on the c-space, the obstacle radius cannot make obstacles tangent at their perimeters. The optimizer can find solutions that squeeze between c-space occupied cells similarly to in test E. However, once this leaky crevice is patched in **Test F**, the optimizer correctly finds the truly optimal spline. 
+But if the obstacles are modeled based on the c-space, the obstacle radius cannot make obstacles tangent at their perimeters. The optimizer can find solutions that squeeze between c-space occupied cells similarly to in **Test E**. However, once this leaky crevice is patched in **Test F**, the optimizer correctly finds the truly optimal spline. 
 
 This exercise is the reason why the obstacle radius is 1.5 times that of the map cell resolution. Because when occupied cells are mapped as obstacles, this radius forces obstacle regions to overlap and plug any leaks in the cost map. 
 
