@@ -132,7 +132,7 @@ Solving for a chord-parametrized quintic spline's coefficients requires knowing 
 </table>
 
 ### 4.3 Defining the Cost Function
-A spline is adaptive by exploring c-space homotopy while avoiding obstacles in its environment. This requires quantifying the overlap of a spline with a set of obstacles. Potential solutions for a spline are candidate splines with optimal **(k0, k1)**. However, optimal splines must also minimize acceleration and arc length to ensure safe, controlled motion while driving. 
+A spline is adaptive by exploring c-space homotopy while avoiding obstacles in its environment. This requires quantifying and minimizing the overlap of a spline with a set of obstacles. Potential solutions for a spline are candidate splines with optimal **(k0, k1)**. However, optimal splines must also minimize acceleration and arc length to ensure safe, controlled motion while driving. 
  
  #### 4.3.1 Outlining the Cost Function 
 <p align="center">
@@ -167,7 +167,7 @@ The result is a final scalar cost for **J(S)**.
 This ensures no single sub-cost **f(S)** overpowers the rest, but biases toward obstacle avoidance so the path avoids intersecting walls and obstacles. **This is the safety guarantee for our trajectory planner.** 
 
 #### 4.3.2 Outlining the Obstacle Cost 
-The subsection above outlines the cost function. This subsection describes in detail how the obstacle sub cost is calculated. Obstacle cost requires measuring the collision distance between the robot and each obstacle.  
+The subsection above outlines the cost function. This subsection describes in detail how the obstacle sub cost is calculated. Obstacle cost requires measuring the distance between the robot and each obstacle.  
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -180,7 +180,7 @@ The subsection above outlines the cost function. This subsection describes in de
         <td width="4%" style="border: none;"></td>
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                This starts with defining spline <b>S</b> and obstacle set <b>O</b> as matrices with shape Nx2 and Mx2, respectively. As seen in <b>Equation 4</b>, each row is a point in 2D space for both matrices <b>S</b> and <b>O</b>.  
+                This starts by defining the spline <b>S</b> and the obstacle set <b>O</b> as matrices with shapes Nx2 and Mx2, respectively. As seen in <b>Equation 4</b>, each row is a point in 2D space for both matrices <b>S</b> and <b>O</b>.  
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
                 Also notated in <b>Equation 4</b>, matrix <b>D</b> with shape MxN represents the distance between all N spline points and M obstacles. The <b>D_ij</b> notates the element-wise calculation for distance across matrix <b>D</b>.
@@ -189,16 +189,16 @@ The subsection above outlines the cost function. This subsection describes in de
     </tr>
 </table>
 
-From this distance matrix **D**, distances below a threshold are considered collisions. This is best notated by a radial threshold from each obstacle in matrix **O**. As a result, the cost function punishment scales with how much of the spline overlaps with obstacles. 
+From this distance matrix **D**, distances below a threshold are considered collisions. This is best expressed as a radial threshold from each obstacle in matrix **O**. As a result, the obstacle cost penalty scales with the extent to which the spline overlaps with obstacles. 
 
 <p align="center">
     <img src="equations/eq_5_act_function.png" style="width: 90%;">
     <figcaption style="text-align: center;"><b>Equation 5:</b> <i>Models the obstacle cost activation function.</i></figcaption>
 </p>
 
-To achieve this radial filtering, matrix **D** is passed into the activation function modeled in **Equation 5**. The activation function is an element-wise operation on each element **D_ij**. This function is the product of a sigmoid step function and inverse distance function. 
+To achieve this radial filtering, matrix **D** is passed into the activation function modeled in **Equation 5**. The activation function is an element-wise operation on each element **D_ij**. This function is the product of a sigmoid step function and an inverse distance function. 
 
-The sigmoid serves as a steep continuous step function that collapses to zero for all distances **D_ij** greater than **r_thresh**. The sigmoid converges to one for distances below the threshold. This sigmoid is multiplied by a clamped inverse distance cost, as seen in **Equation 5**. The inverse distance is maximized at **D_ij=0** with max output **c_max**. Between the sigmoid and inverse distance, the result is decaying costs for larger distances such that cost collapses to zero beyond a threshold radius.   
+The sigmoid serves as a steep, continuous step function that collapses to zero for all distances **D_ij** greater than **r_thresh**. The sigmoid converges to one for distances below the threshold. This sigmoid is multiplied by a clamped inverse distance cost, as seen in **Equation 5**. The inverse distance is maximized at **D_ij=0** with max output **c_max**. Between the sigmoid and inverse distance, the result is decaying costs for larger distances such that the cost collapses to zero beyond a threshold radius.   
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -219,18 +219,18 @@ The sigmoid serves as a steep continuous step function that collapses to zero fo
 
 Multiplying the activation function by the upper-triangular matrix yields another MxN matrix. Each column represents a single point of N points along the spline **S**. Each row represents the sub-cost contributed by each M obstacles from set **O**. The cumulative summation carries past obstacle costs from previous columns into later columns. This forces obstacle costs to compound if a spline clips through a wall while punishing harder for earlier collisions on the path. **As a result, later points along a path "remember" past collisions and act as a deterrent against greedy bias during optimization.** 
 
-A final transpose and transformation against a Mx1 ones vector sums all compounded obstacle cost at each point along the path. The result is a sub-cost vector for obstacle cost that is denoted in **Equation 6**. 
+A final transpose and transformation against a Mx1 ones vector sums all compounded obstacle costs at each point along the path. The result is a sub-cost vector for obstacle cost, denoted in **Equation 6**. 
 
 **Obstacles are then retrieved from the PGM map, published by the Map Server node. Obstacles are given a radius 1.5 times the map resolution.** This radius serves as a c-space dilation when optimizing for the spline k0 and k1 coefficients. 
 
 ### 4.4 Optimizing Splines with Simulated Annealing 
-Now with an established cost function, this subsection analyzes the cost map and optimization process for tuning splines. This begins with viewing the cost map. 
+Now, with an established cost function, this subsection analyzes the cost map and optimization process for tuning splines. This begins with viewing the cost map. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="35%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                As seen in <b>Figure 5</b>, a cost map is generated for interpolating a spline between a set of obstacles. The surface represents the <b>(k0,k1)</b> k-space; the height the cost. The red plane has a slope in the direction of "best guess" global minimums; it is regressed from an initial sampling of the k-space. 
+                As seen in <b>Figure 5</b>, a cost map is generated for interpolating a spline between a set of obstacles. The surface represents the <b>(k0,k1)</b> k-space; the height the cost. The red plane has a slope toward the "best guess" global minimums; it is regressed from an initial sampling of the k-space. 
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
                 This graph illustrates how the cost map is a non-convex surface. Considering the k-space maps to the cost surface continuously, splines fall into different homotopy classes based on whether they travel over or under an obstacle. <b>Class count scales exponentially with more obstacles to travel around.</b> 
@@ -246,10 +246,10 @@ Now with an established cost function, this subsection analyzes the cost map and
     </tr>
 </table>
 
-Recalling **Figure 4**, the stationary spline can be transformed by traversing the k-space to test different combinations of **(k0,k1)**. If the spline in **Figure 4** travels over the obstacle, the only topological way to get that spline to travel under the obstacle instead is by traveling through it in the k-space. This stands to reason that the non-convex cost map will be riddled with steep ridges in the k-space where there are obstacle collisions in the c-space. Then between these ridges, local minimum valleys will be difficult to distinguish from absolute minimums. Given this is what is observed in **Figure 5**, simulated annealing is the chosen optimizer algorithm when seeding the search at **(k0,k1)**=(0,0). 
+Recalling **Figure 4**, the stationary spline can be transformed by traversing the k-space to test different combinations of **(k0,k1)**. If the spline in **Figure 4** travels over the obstacle, the only topological way to get that spline to travel under the obstacle instead is by traveling through it in the k-space. It stands to reason that the non-convex cost map will be riddled with steep ridges in the k-space where there are obstacle collisions in the c-space. Between these ridges, local minimum valleys will be difficult to distinguish from absolute minimums. Given these observations in **Figure 5**, simulated annealing is the chosen optimizer algorithm when seeding the search at **(k0,k1)**=(0,0). 
 
 ### 4.5 Initial Tests 
-The last couple of subsections defined a cost function and an optimizer to minimize that cost by choosing an optimal **(k0,k1)** from the k-space. Before testing in a Gazebo-RViz environment, this apparatus is tested below. 
+The last couple of subsections defined a cost function and selected an optimizer to minimize it, choosing an optimal **(k0, k1)** from the k-space. Before testing in a Gazebo-RViz environment, this apparatus is tested below. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -279,11 +279,11 @@ The last couple of subsections defined a cost function and an optimizer to minim
     <figcaption style="text-align: center"><b>Figures 6-9:</b> <i>Illustrates spline adaptation to environment with simulated annealing.</i></figcaption>
 </div><br>
 
-As seen in **Figures 6-9**, the simulated annealing optimizer is tasked with traversing the k-space to find optimal **(k0,k1)**. Red circles represent obstacles belonging to set **O**. Points along the spline, when discretized, belong to set **S**. During training, the **(k0, k1)** curvature is set, spline coefficients are calculated analytically, the spline is interpolated, and then the cost is computed. This repeats for every epoch computed in the k-space. **This is highly expedited by implementing the cost function and spline coefficients with NumPy operator broadcasting**. Earlier epochs show splines drawn in purple, and more tuned later epochs show splines converging with a yellow color. 
+As seen in **Figures 6-9**, the simulated annealing optimizer is tasked with traversing the k-space to find optimal **(k0,k1)**. Red circles represent obstacles belonging to set **O**. Points along the spline, when discretized, belong to set **S**. During training, the **(k0, k1)** curvature is set, spline coefficients are calculated analytically, the spline is interpolated, and then the cost is computed. This repeats for every epoch computed in the k-space during optimization. **This is highly expedited by implementing the cost function and spline coefficients with NumPy operator broadcasting**. Optimization is illustrated by earlier epochs showing the spline in purple and later, more tuned epochs showing the spline converging in yellow. 
 
 Viewing tests A and B, the initial and final waypoints and poses are the same. **Test A shows** how the spline completes a round-about the walls of obstacles. **Test B shows** how the earlier epochs explore possible openings in the wall of obstacles; the spline chooses the one that minimizes its arc length in later epochs. This is solidified in the final black spline. 
 
-Additionally, **Test C shows** how changing the final waypoint's pose to being placed further south still results in the optimizer finding an optimal spline. **Test D also shows** this by exploring both openings to its final pose, and choosing the more northern opening that minimizes arc length and curvature.  
+Additionally, **Test C shows** that changing the final waypoint's pose to a position further south still results in the optimizer finding an optimal spline. **Test D also shows** this by exploring both openings to its final pose and choosing the more northern opening that minimizes arc length and curvature.  
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
@@ -304,14 +304,14 @@ Additionally, **Test C shows** how changing the final waypoint's pose to being p
 
 However, although the optimizer converges well on splines that adapt to their environment, there are edge cases. The biggest is the **leaky obstacle problem**. As seen in **Figures 10-11**, an obstacle can leave a slight opening, demonstrated in **Test E**. The optimal spline in **Test E** may be impractical. 
 
-But if the obstacles are modeled based on the c-space, the obstacle radius cannot make obstacles tangent at their perimeters. The optimizer can find solutions that squeeze between c-space occupied cells similarly to in **Test E**. However, once this leaky crevice is patched in **Test F**, the optimizer correctly finds the truly optimal spline. 
+But if obstacles are modeled based on the c-space, their radii cannot make them tangent along their perimeters. The optimizer can find solutions that squeeze between c-space-occupied cells, similar to those in **Test E**. However, once this leaky crevice is patched in **Test F**, the optimizer correctly finds the truly optimal spline. 
 
-This exercise is the reason why the obstacle radius is 1.5 times that of the map cell resolution. Because when occupied cells are mapped as obstacles, this radius forces obstacle regions to overlap and plug any leaks in the cost map. 
+This exercise is why the obstacle radius is 1.5 times the map cell resolution. When occupied cells are mapped as obstacles, this radius forces obstacle regions to overlap, thereby plugging any leaks in the cost map. 
 
 Lastly, recalling section 4.4, the number of ridges on the cost can scale exponentially with the number of homotopy classes of splines. **The number of classes and convergence time can be minimized for large sets of obstacles by plugging these leaks.** 
 
 ## 5.0 Trajectory Planning Package Pipeline
-Given our functional adaptive splines and optimizer, this section will outline how it is used in ROS2. To recall, a TurtleBot3 navigates a PGM map that is published by a Map Server node. The subsections below describe further.
+Given our functional adaptive splines and optimizer, this section will outline how they are used in ROS2. To recall, a TurtleBot3 navigates a PGM map that is published by a Map Server node. The subsections below describe further.
 
 ### 5.1 Waypoint Parsing 
 Once in RViz, the user can use the Goal Pose feature. The `nav_node` subscribes to this topic and receives a goal pose. An A* search is run to find a valid path from the robot to this pose. 
@@ -335,10 +335,10 @@ Once in RViz, the user can use the Goal Pose feature. The `nav_node` subscribes 
     </tr>
 </table>
 
-Finally, the local c-space at each waypoint is placed in a kernel such that occupied cells are filtered out. A centroid is calculated in the local free space in that kernel. <b>This snaps waypoints to local centroids to address the "wall hugging" symptom of A* heuristics.</b> 
+Finally, the local c-space at each waypoint is placed in a kernel such that occupied cells are filtered out. The centroid is calculated within the local free space of that kernel. <b>This snaps waypoints to local centroids to address the "wall hugging" symptom of A* heuristics.</b> 
 
 ### 5.2 Waypoint Dropout 
-Once the initial waypoints are parsed by the `nav_node`, the waypoints are placed in a `nav_msgs/Path` instance; it is then sent over a service request to the `spline_node`. The spline node initiates by creating and optimizing splines between each of the waypoints. 
+Once the initial waypoints are parsed by the `nav_node`, they are placed in a `nav_msgs/Path` instance; it is then sent over a service request to the `spline_node`. The spline node begins by creating and optimizing splines between each pair of waypoints. 
 
 <p align="center">
     <img src="figures/fig_13_dropout.png" style="width: 60%;">
@@ -347,14 +347,14 @@ Once the initial waypoints are parsed by the `nav_node`, the waypoints are place
 
 As seen in **Figure 13**, each node is a waypoint such that edges are optimized splines that connect them. Waypoint dropout begins by moving a three-node slider down the list of waypoints. In the illustration, the sum cost from spline **BC** to **CD** is compared to the potential spline **BD**. Spline **BD** is created and optimized. Waypoint **C** is dropped from the list if the cost of **BD** is less than or equal to a percent difference compared to the sum cost of **BC-CD**. 
 
-The dropout slider traverses down the list of waypoints while making these greedy cost comparisons. If dropping a waypoint detrimentally affects a path (i.e., intersecting an obstacle), the cost of the comparative spline will be noticeably higher. This percent difference filter between **BC-CD** compared to **BD** ensures that dropping waypoint **C** does not compromise the path. 
+The dropout slider traverses down the list of waypoints while making these greedy cost comparisons. If dropping a waypoint detrimentally affects a path (i.e., intersecting an obstacle), the cost of the comparative spline will be noticeably higher. This percent-difference filter between **BC-CD** compared to **BD** ensures that dropping waypoint **C** does not compromise the path. 
 
-Dropout continues either until a certain number of waypoints are dropped, or until no waypoints are able to be dropped. **Any new splines created in this process are memoized after they are optimized; all known splines are cached.**
+Dropout continues either until a certain number of waypoints are dropped or until no waypoints can be dropped. **Any new splines created in this process are memoized after they are optimized; all known splines are cached.**
 
 ### 5.3 Final Heading Tuning
-The final task of the `spline_node` is the tuning of the final heading at the goal pose. Once dropout is complete, the final waypoint [where the goal pose is] has its heading adjusted. An upper and lower [counterclockwise and clockwise] heading is offset from the base heading by a set bound value. A binary search starts by comparing the cost of the base spline to the other two. 
+The final task of the `spline_node` is to tune the final heading at the goal pose. Once dropout pruning is complete, the final waypoint [where the goal pose is] has its heading adjusted. An upper and lower [counterclockwise and clockwise] heading is offset from the base heading by a set bound value. A binary search starts by comparing the cost of the base spline with those of the other two. 
 
-The spline with a heading with the lowest cost is set as the new base spline. The bound value is divided by the epoch. Epochs increment for each comparison. After 2-5 epochs, the binary search adjusts the heading of the final waypoint while caching its interpolated path. 
+The spline with the lowest cost is set as the new base spline. The bound value is divided by the epoch. Epochs increment for each comparison. After 2-5 epochs, the binary search adjusts the heading of the final waypoint while caching its interpolated path. 
 
 The original A* path may have reached the goal pose while pushing up against a wall. If the final waypoint sets its heading to that of the final A* cell, the final spline too may end up squished against the wall. Final heading tuning is used to handle this. 
 
