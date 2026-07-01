@@ -1,41 +1,43 @@
 # Adaptive Spline Trajectory Planning with Simulated Annealing 
 ## 1.0 Introduction
-The goal of this project was to develop a custom motion planner to drive along curved **spline paths that adapt to avoid obstacles and conform to their environment**. This project achieves this with a TurtleBot3, navigating a maze and crowded spaces in the ROS2-Gazebo simulation environment. Each spline path is trained for robot safety when driving.
+The goal of this project was to develop a custom motion planner to drive along **spline paths that adapt to avoid obstacles and conform to the environment**. Spline paths interpolate a small subset of an initial A* search. **Splines explore neighboring homotopy** for adaptive planning. To maximize optimality and safety, this allows a spline path to topologically deviate from an initial A* path.   
+
+Our motion planner was implemented using a TurtleBot3 to navigate a maze and crowded spaces in the ROS2-Gazebo environment.
 
 ## 2.0 Background
-Our robot must navigate from a rest position to a target position. The environment is a PGM map, loaded from a Map Server node. The map is dilated and inflated to create a configuration space (c-space). The c-space is a discretized (vectorized) 2D graph, scaled to fit the continuous space the robot navigates. Each graph cell is either free or occupied by an obstacle or wall. Free spaces are places the robot can safely drive through. 
+Our robot must navigate from a rest position to a target position. The environment is a PGM map, loaded from a Map Server node. The map is a dilated and inflated configuration space (c-space). The c-space is a discretized (vectorized) 2D graph, scaled to fit the continuous space the robot navigates. Each graph cell is either free or occupied by an obstacle or wall. Free spaces are places the robot can safely drive through. 
 
-Trajectory planning involves (1) path planning and (2) motion planning. The first is handled with heuristics and an A* graph search on the c-space between where the robot starts and its target position. The result is a connected chain of edges between free cells in the c-space. Common path planners, such as Point-to-Point (P2P), then parse a path from those free cells. However, common planners will follow the A* path closely to ensure robot safety. **This becomes a problem for spline planners.**
+Trajectory planning involves (1) path planning and (2) motion planning. The former is handled with heuristics and an A* graph search on the c-space between where the robot starts and its target position. The result is a connected chain of edges between free cells in the c-space. Common path planners, such as Point-to-Point (P2P), then parse a path from those free cells. However, common planners tend to follow the A* path closely to ensure robot safety. **This becomes a problem for spline planners.**
 
 ### 2.1 Project Motivation 
-Our robot creates paths to follow from quintic spline polynomials. Splines create organic and curved geometric paths. These are excellent for non-holonomic motion and smooth maneuvering. Our planner parses waypoints from an A* search to interpolate the spline path. 
+Our robot creates paths to follow from quintic spline polynomials for organically curved geometry. These are excellent for non-holonomic motion and smooth maneuvering. Our planner parses waypoints from an A* search to interpolate the spline path. 
 
 <table border="0" cellpadding="0" cellspacing="0" style="margin: 0; padding: 0; border: none; border-collapse: collapse;">
     <tr style="margin: 0; padding: 0; border: none;">
         <td width="48%" valign="top" style="margin: 0; padding: 0; border: none;">
             <p style="margin: 0; padding: 0; margin-bottom: 1rem">
-                Splines take on several shapes and forms based on their curvature and the waypoints they interpolate. The A* search provides potential waypoints. But waypoints must be selectively chosen. As seen in <b>Figure 1</b>, a raw path is created from points connected by a dashed line, where the spline interpolates a subset of those points. 
+                Splines take on several shapes based on their curvature and the waypoints they interpolate. The A* search provides potential waypoints. But waypoints must be selectively chosen. As seen in <b>Figure 1</b>, a baseline path is created from points connected by a dashed line. Analogously, this would be our A* search. The spline interpolates waypoints as a subset of those points. Splines more closely resemble the baseline path with larger subsets.   
             </p>
             <p style="margin: 0; padding: 0; margin-bottom: auto">
-                This becomes a balancing act. In our case, the A* path is the dashed line. Fewer waypoints means the spline path is smoother and can have larger maneuvers. But it may be unclear what shape that spline takes on, and if it risks colliding with an obstacle. Conversely, using more waypoints constrains the spline onto the A* path that will ensure it does not collide with obstacles. 
+                The <b>optimality of a baseline path does not imply the optimality of a spline path</b>. Greater subsets of waypoints restrict spline geometry with greater safety and baseline path resemblance. Fewer waypoints allow for smoother paths with larger maneuvers with less restriction. It can be unclear what shape splines take on when fewer waypoints are used. This introduces uncertainty, increasing the risk of colliding with obstacles in the environment.
             </p>
         </td>
         <td width="4%" style="border: none;"></td>
         <td width="48%" style="margin: 0; padding: 0; border: none;">
             <p align="center">
                 <img src="figures/fig_1.png" alt="B-Spline Path Smoothing" width="100%">
-                <figcaption><b>Figure 1:</b> <i>Illustrates spline path planning. <a href="https://doi.org/10.3390/machines13080710">[1]</a></i></figcaption>
+                <figcaption><b>Figure 1:</b> <i>Illustrates conventional spline path planning. <a href="https://doi.org/10.3390/machines13080710">[1]</a></i></figcaption>
             </p>
         </td>
     </tr>
 </table>
 
 ### 2.2 Exploration-Exploitation Bottleneck on Splines and Safety 
-If too many waypoints are chosen from the A* path, then A* will have more influence over the path geometry than the curvature of the splines created. The balancing act from before becomes a trajectory bottleneck. The curvature and geometric malleability of splines is minimized when the number of waypoints and safety are maximized. <b>Figure 1</b> shows this trade-off, in which every other waypoint is rejected. 
- 
-The spline path also follows the same homotopy as the original path. Viewing <b>Figure 1</b> from left to right, both the original and spline path travel over the first obstacle and weave under the second, and over the third in the same topological way. Although this allows for deterministic path planning, there are benefits to differing spline homotopy from the original path. For instance, consider if the spline in <b>Figure 1</b> could not pass through point `kp2`, and the spline instead traveled over (atop) the second obstacle from point `kp1` to `kp3`. **A spline path like that may turn out to be shorter or smoother.** 
+Spline optimality is maximized when it is not forced to exactly resemble the baseline path. Therefore, the subset of waypoints is minimized to promote spline geometry rather than maximize resemblance. However, splines become ambiguous as they become less restrained by the baseline path. This uncertainty reduces safety and can lead to collisions with obstacles. Therefore, spline optimality can jeopardize safety as a trajectory bottleneck. Applying obstacle avoidance can restrain a spline when the baseline path does not. 
 
-But giving splines the ability to explore different homotopies from the original path brings back the bottleneck of exploring at the expense of safety; this is especially true in environments that can change. **Therefore, adaptive spline planning that avoids obstacles could reconcile exploration beyond A\* with safety.**
+This approach allows for c-space homotopy exploration where simple path-smoothing algorithms cannot. As seen in <b>Figure 1</b> from left to right, both the baseline and spline path travel over the first obstacle and weave under the second, and over the third in the same topological way. Although this allows for deterministic path planning, there are benefits to deviating the homotopy from the baseline path. A non-deterministic path planner could safely explore and discover new path homotopies while avoiding obstacles. For instance, consider if the spline in <b>Figure 1</b> could not pass through point `kp2`, and the spline instead traveled over (atop) the second obstacle from point `kp1` to `kp3`. Discovered with non-deterministic exploration, **this spline path may be shorter or smoother than the baseline path.** 
+
+But exploration for optimal splines jeopardizes safety. **Therefore, adaptive spline planning that avoids obstacles could reconcile optimal-spline exploration beyond A\* with safety.**
 
 ## 3.0 Motion Controls 
 Trajectory planning involves (1) path planning and (2) motion planning. This section will briefly cover the motion planning. Motion planning is based on robot odometry and the spline path it follows. 
