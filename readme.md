@@ -362,20 +362,20 @@ The original A* path may have reached the goal pose while pushing up against a w
 Once dropout and final heading tuning are complete, the full spline path is reconstructed and sent back to `nav_node` from `spline_node` as the service response. The `nav_node` then applies a trapezoidal motion profile with a PID feedback controller as illustrated in section 3.0. 
 
 ## 6.0 Results 
-This all culminates in a TurtleBot3 driving along adaptive splines to navigate to a set goal pose in the Gazebo-RViz Sim Environment. This is seen below.
+This culminates in a TurtleBot3 driving along adaptive splines to reach a specified goal pose in the Gazebo-RViz Sim Environment. This is seen below.
 
 <p align="center">
     <img src="figures/fig_14_test_1.png" style="width: 90%;">
     <figcaption style="text-align: center;"><b>Figure 14:</b> <i>RViz2 screenshot of trajectory planning.</i></figcaption>
 </p>
 
-Shown in **Figure 14**, the robot began its navigation in the top right of the map and ended at the bottom left goal pose. The green path of grid cells represents the path taken. **The point clouds visualize how each spline was optimized.** Each colored arc was a spline considered and optimized. Fanned arcs that **are on** the ground show how each spline converged onto yellow splines from purple splines. 
+Shown in **Figure 14**, the robot began its navigation in the top right of the map and ended at the bottom left goal pose. The green path of grid cells represents the path taken. **The point clouds visualize how each spline was optimized.** Each colored arc was a spline considered. Each grouping of arcs shows a spline's evolution through its optimization steps, from purple to yellow.
 
-**Figure 14** also shows how some optimized splines are visualized as rising above the map in arcs. **Spline tuning that is projected in the Z-axis represents successful waypoint dropouts**. 
+**Figure 14** also shows how some optimized splines are visualized as rising above the map in arcs. **Spline tuning, which is projected in the Z-axis, is a visual key to indicate splines resulting from waypoint dropout**. 
 
-It can be seen how the overall path initially intersected the map center. At the center, there was a sharp turn that was unnecessary. The dropout process removed these center waypoints and smoothed the path. This occurred four times in **Figure 14**. 
+It can be seen how the overall path initially intersected the map center. At the center, there was a sharp turn that was unnecessary. The dropout process then prunes these center waypoints after determining that the path cost would not be compromised. 
 
-Eventually, the dropout process began comparing top-right waypoints to bottom-left waypoints. **A final path was found that circumvented the entire map center in one large smooth arc.** This final path followed the initial A* and initial splines, but was able to explore enough to discover a more optimal path that avoids obstacles and the map center.
+Eventually, the dropout process began comparing top-right waypoints to bottom-left waypoints. **A final path was then found that circumvented the entire map center in one large smooth arc.** This final path followed the initial A* and initial splines, but was able to explore homotopy enough to discover a more optimal path that avoids obstacles and the map center.
 
 <p align="center">
     <img src="figures/fig_15_test_2.gif" style="width: 100%;">
@@ -410,7 +410,7 @@ Eventually, the dropout process began comparing top-right waypoints to bottom-le
     <figcaption style="text-align: center"><b>Figures 16-19:</b> <i>Illustrates adaptive spline trajectory planning.</i></figcaption>
 </div><br>
 
-In the remaining illustrations, **Figure 15** shows a video demonstration of the trajectory planner finding and driving a motion-profiled path. **Figures 16-19** show other trajectory planning instances that lead to a marker goal pose. In each case, every path respects the c-space. Both **Test B** and **Test C** also show how each of their splines was optimized with their colored point clouds. **This is similar to the initial optimizer test in section 4.5**. 
+In the remaining illustrations, **Figure 15** shows a video demonstration of the trajectory planner finding and driving a motion-profiled path. **Figures 16-19** show additional trajectory-planning instances that lead to a marker goal pose. In each case, every path respects the c-space. Both **Test B** and **Test C** also show how each spline was optimized using a color point cloud. **This visualization is similar in illustration to the initial optimizer tests in section 4.5**. 
 
 ## 7.0 Conclusion
 ### 7.1 Project Review
@@ -430,9 +430,11 @@ Once the ROS2 environment has been set up in the CLI terminal, the entire projec
 The robot can be driven by selecting a goal pose with the RViz goal pose feature. 
 
 ### 7.3 Future Works
-For future work, combining this adaptive planner with real-time adaptive controls would be the next step of development. The PGM map is static here, but can be set dynamic; the map could be updated according to sonar sensor data. 
+For future work, combining this adaptive planner with real-time adaptive controls would be the next step of development. The PGM map is static here but can be set dynamically; it could be updated based on sonar sensor data. 
 
-Further work on how the robot can adjust trajectories in dynamic/real time with a dynamic PGM map may also demand further revision of this work. Although this current trajectory planner is efficient for its complexity, between optimizer hyperparameters, the waypoint dropout process, and the final heading tuning process, these procedures could be further optimized in software.
+Although this trajectory planner is efficient given its complexity, the optimizer hyperparameters, the waypoint dropout process, and the final heading tuning process could still be further optimized in software. Benchmarking the optimizer and reducing the complexity of the cost function may help. 
+
+This project focuses on exploring c-space homotopy for adaptive spline planning; future work to mitigate exploration by **caching or learning past path geometry could be a logical next step**. Lastly, it may be interesting to extend this work to robot manipulator trajectory planning too.  
 
 That is all for now. Thank you for reading. **: )**
 
